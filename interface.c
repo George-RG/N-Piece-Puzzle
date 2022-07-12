@@ -18,15 +18,6 @@ void interface_init()
 
 	textures = malloc(sizeof(Texture) * 8);
 
-	textures[0]= LoadTextureFromImage(LoadImage("assets/1.png"));
-    textures[1]= LoadTextureFromImage(LoadImage("assets/2.png"));
-	textures[2]= LoadTextureFromImage(LoadImage("assets/3.png"));
-	textures[3]= LoadTextureFromImage(LoadImage("assets/4.png"));
-	textures[4]= LoadTextureFromImage(LoadImage("assets/5.png"));
-	textures[5]= LoadTextureFromImage(LoadImage("assets/6.png"));
-	textures[6]= LoadTextureFromImage(LoadImage("assets/7.png"));
-	textures[7]= LoadTextureFromImage(LoadImage("assets/8.png"));
-
 	InitAudioDevice();
 	clap = LoadSound("assets/clap.wav");
 }
