@@ -1,7 +1,7 @@
 # Graphical Representation of a Puzzle Solver
 
 ## The game
-The programm can solve the clasic [Sliding puzzle](https://en.wikipedia.org/wiki/Sliding_puzzle). 
+The program can solve the clasic [Sliding puzzle](https://en.wikipedia.org/wiki/Sliding_puzzle). 
 
 ### Board
 The consept is very simple. The user can select the boardsize which will be the edge of the board. On the board we have tiles numbered from 1 to edge squered-1.With those tiles the board is coverded fully except a single spot.
