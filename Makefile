@@ -3,6 +3,8 @@ LIB = ./lib
 INCLUDE = ./include
 MODULES = ./modules
 
+MY_OS = linux
+
 #Program args
 ARGS = 3
 
@@ -17,15 +19,20 @@ objects= game.o interface.o 8piece_puzzle.o List.o PQImplementation.o $(LIB)/lib
 
 EXEC = game
 
-# Παράμετροι της βιβλιοθήκης raylib
-include $(LIB)/libraylib.mk
+ifeq ($(MY_OS),win)
+	LDFLAGS += -lgdi32 -lwinmm -lopengl32
+	CC = x86_64-w64-mingw32-gcc
+else ifeq ($(MY_OS),linux)
+	LDFLAGS += -ldl -lpthread -lGL
+endif
 
 $(EXEC):$(objects)
 	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
+#cp $(EXEC) /mnt/c/Users/Georg/Desktop/
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
-	$(MAKE) -C $(LIB) $*.a
+	$(MAKE) -C $(LIB) $*.a SUFFIX=$(MY_OS)
 
 #For compiling the ADTs
 List.o :

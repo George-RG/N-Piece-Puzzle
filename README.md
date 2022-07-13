@@ -20,17 +20,19 @@ The program uses the [A* search algorithm](https://en.wikipedia.org/wiki/A*_sear
 - Choose the state with the highest evaluation and set it as current
   
 ## The graphical enviroment
-For the graphics the program uses a library called [Raylib](https://www.raylib.com/). The program can adapt to any board size since it creates alla the not-repeating sprites in real time.
+For the graphics the program uses a library called [Raylib](https://www.raylib.com/). The program can adapt to any board size since it creates all the not-repeating sprites in real time.
 
 ## Installation and Running
 
-- Intall the program by compiling the source code
+- Install the program by compiling the source code
     1. Download the source files and navigate to the downloaded folder.
     2. Make sure make is instaled.
-    3. Type make in the downloaded folder.
+    3. Type `make` in the downloaded folder.
+
+> Thanks to [Mitsos](https://github.com/Jimminer) the program can now be compiled for windows and linux through wsl. All you have to do to compile for windows is add `MY_OS=win` to the make command. 
 
 - Run the program
-    1. Type ./game "Edge" where the edge is the edge of the board.
+    1. Type `./game "Edge"` where the edge is the edge of the board.
     2. Type row by row the numbers of the tiles in the starting board. 
     3. Choose Auto or Manual progression
    
