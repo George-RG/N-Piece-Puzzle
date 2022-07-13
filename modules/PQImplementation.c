@@ -5,7 +5,7 @@
 #include "PQInterface.h"
 
 typedef struct PQNodeTag {
-   PQItem   NodeItem;
+   Pointer   NodeItem;
    struct PQNodeTag *Link;
 } PQListNode;
 
@@ -13,8 +13,8 @@ typedef struct PQNodeTag {
 typedef struct PriorityQueue{
    int Count;
    PQListNode *ItemList;
-   int (*CompareFunc)(PQItem a, PQItem b);
-   void (*DestroyFunc)(PQItem a);
+   CompareFunc CompareFunc;
+   DestroyFunc DestroyFunc;
 } PriorityQueue;
 
 
@@ -22,22 +22,22 @@ typedef struct PriorityQueue{
 /* declared in the interface file together with */
 /* local private functions.                     */
 
-PQ Initialize(int (*compare)(PQItem,PQItem), void (*destory)(PQItem))
+PQ PQ_Initialize(CompareFunc compare, DestroyFunc destroy)
 {
   PQ pq = malloc(sizeof(PriorityQueue));
   pq->Count=0;
   pq->ItemList=NULL;
   pq->CompareFunc=compare;
-  pq->DestroyFunc=destory;
+  pq->DestroyFunc=destroy;
   return pq;
 }
 
-int Empty(PQ pq)
+int PQ_IsEmpty(PQ pq)
 {
   return(pq->Count==0);   
 }
 
-PQListNode *SortedInsert(PQItem Item, PQListNode *P,int (*compare)(PQItem,PQItem))
+PQListNode *SortedInsert(Pointer Item, PQListNode *P,CompareFunc compare)
 {
   PQListNode *N;
 
@@ -55,15 +55,15 @@ PQListNode *SortedInsert(PQItem Item, PQListNode *P,int (*compare)(PQItem,PQItem
   }
 }
 
-void Insert(PQItem Item, PQ pq)
+void PQ_Insert(PQ pq, Pointer data)
 {
   pq->Count++;
-  pq->ItemList=SortedInsert(Item, pq->ItemList,pq->CompareFunc);
+  pq->ItemList=SortedInsert(data, pq->ItemList,pq->CompareFunc);
 }
 
-PQItem Remove(PQ pq)
+Pointer PQ_Pop(PQ pq)
 {
-  PQItem temp;
+  Pointer temp;
   PQListNode *free_temp;
   temp=pq->ItemList->NodeItem;
   free_temp = pq->ItemList;
@@ -73,7 +73,7 @@ PQItem Remove(PQ pq)
   return(temp);
 }
 
-void FreeQueue(PQ pq)
+void PQ_Destroy(PQ pq)
 {
   PQListNode* temp;
   while(pq->ItemList != NULL)

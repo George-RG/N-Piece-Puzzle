@@ -16,7 +16,7 @@ ListPtr solve(State* state, PQ Queue, ListPtr Visited)
     {
         expand(cur_state,Queue,Visited);
 
-        cur_state = Remove(Queue);
+        cur_state = (State*)PQ_Pop(Queue);
 
         ListInsert(cur_state,Visited);
     }
@@ -55,7 +55,7 @@ void expand(State* cur_state, PQ Queue, ListPtr Visited)
             if(ListFind(Visited,new_state) == -1)
             {
                 evaluate(new_state);
-                Insert(new_state,Queue);
+                PQ_Insert(Queue, new_state);
             }
             else
             {
@@ -100,6 +100,21 @@ int compare_same(PQItem a, PQItem b)
     return 0;
 }
 
+void destroyfunc_ptr(Pointer ptr)
+{
+    State* a = (State*)ptr;
+
+    if(a == NULL)
+        return;
+
+    for(int i=0; i<a->size; i++)
+        free(a->board[i]);
+
+    free(a->board);
+
+    free(a);
+}
+
 void destroyfunc(PQItem a)
 {
     if(a == NULL)
@@ -113,12 +128,17 @@ void destroyfunc(PQItem a)
     free(a);
 }
 
-int compare_evals(PQItem a,PQItem b)
+int compare_evals(Pointer first,Pointer second)
 {
-    if(a->eval <= b->eval)
-        return 1;
+    State* a = (State*)first;
+    State* b = (State*)second;
 
-    return -1;
+    return b->eval - a->eval;
+
+    // if(a->eval <= b->eval)
+    //     return 1;
+
+    // return -1;
 }
 
 void evaluate (State* state)

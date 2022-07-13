@@ -1,8 +1,11 @@
-#include"Item.h"
+typedef void *Pointer; //Void pointer to store any kind of data needed
+typedef void(*DestroyFunc)(Pointer); //Function to propertly free the momory that our data are using
+typedef int(*CompareFunc)(Pointer a,Pointer b);//Returns 0 if a=b,<0 if a<b,>0 if a>b
 
 typedef struct PriorityQueue* PQ;
-PQ Initialize(int (*compare)(PQItem,PQItem), void (*destory)(PQItem));
-int Empty (PQ);
-void Insert (PQItem, PQ);
-PQItem Remove (PQ);
-void FreeQueue(PQ pq);
+
+PQ PQ_Initialize(CompareFunc CompareFunc, DestroyFunc destroy);
+int PQ_IsEmpty (PQ);
+void PQ_Insert (PQ, Pointer data);
+Pointer PQ_Pop (PQ);
+void PQ_Destroy(PQ pq);

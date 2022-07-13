@@ -110,7 +110,7 @@ int main (int argc , char* argv[])
     }
 
     ListPtr Visited = CreateList(compare_same,destroyfunc);
-    PQ Queue = Initialize(compare_evals,destroyfunc);
+    PQ Queue = PQ_Initialize(compare_evals,destroyfunc_ptr);
 
     evaluate(initial_state);
 
@@ -135,7 +135,7 @@ int main (int argc , char* argv[])
 
 	interface_close();
 
-    FreeQueue(Queue);
+    PQ_Destroy(Queue);
     freeList(Visited);
     free_gra_state(Graf);
 

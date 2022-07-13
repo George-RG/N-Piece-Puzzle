@@ -3,6 +3,8 @@ LIB = ./lib
 INCLUDE = ./include
 MODULES = ./modules
 
+DEBUG = false
+
 MY_OS = linux
 
 #Program args
@@ -12,12 +14,18 @@ ARGS = 3
 CC = gcc
 
 #compiler options
-CFLAGS = -Wall -Werror -g3 -I$(INCLUDE)
+CFLAGS = -Wall -Werror -I$(INCLUDE)
 LDFLAGS = -lm
 
 objects= game.o interface.o 8piece_puzzle.o List.o PQImplementation.o $(LIB)/libraylib.a
 
-EXEC = game
+EXEC = game.exe
+
+ifeq ($(DEBUG),true)
+	CFLAGS += -g3 -O0
+else
+	CFLAGS += -O3
+endif
 
 ifeq ($(MY_OS),win)
 	LDFLAGS += -lgdi32 -lwinmm -lopengl32
@@ -28,7 +36,7 @@ endif
 
 $(EXEC):$(objects)
 	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-#cp $(EXEC) /mnt/c/Users/Georg/Desktop/
+	cp $(EXEC) /mnt/c/Users/Georg/Desktop/
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
@@ -41,9 +49,14 @@ List.o :
 PQImplementation.o :
 	$(CC) -c $(MODULES)/PQImplementation.c $(LDFLAGS) $(CFLAGS)
 
+PQ.o :
+	$(CC) -c $(MODULES)/PQ.c $(LDFLAGS) $(CFLAGS)
+
 #Cleaning
 PHONY clean:
 	rm -f $(objects) $(EXEC)
+	cd /mnt/c/Users/Georg/Desktop/ 
+	rm -f $(EXEC)
 
 valgrind: $(EXEC)
 	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)
