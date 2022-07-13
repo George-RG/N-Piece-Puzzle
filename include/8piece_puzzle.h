@@ -1,4 +1,4 @@
-#include "PQInterface.h"
+#include "PQ.h"
 #include "ListInterface.h"
 
 #define SCREEN_HEIGHT 900

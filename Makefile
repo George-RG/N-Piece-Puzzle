@@ -17,7 +17,7 @@ CC = gcc
 CFLAGS = -Wall -Werror -I$(INCLUDE)
 LDFLAGS = -lm
 
-objects= game.o interface.o 8piece_puzzle.o List.o PQImplementation.o $(LIB)/libraylib.a
+objects= game.o interface.o 8piece_puzzle.o List.o PQ.o $(LIB)/libraylib.a
 
 EXEC = game.exe
 
