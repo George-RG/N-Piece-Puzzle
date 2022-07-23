@@ -5,6 +5,10 @@
 
 #define CYAN \
 	(Color) { 0, 145, 143, 255 } // Cyan
+
+#define LIGHTCYAN \
+	(Color) {8, 119, 134, 255} // Light Cyan
+
 #define LLGRAY \
 	(Color) { 220, 220, 220, 255 } // Light Light Gray
 
@@ -125,12 +129,16 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 			if (min < MeasureText(max_string, 35))
 				min = MeasureText(max_string, 35);
 
+			int max = SCREEN_WIDTH - 50;
+			if (min > max)
+				min = max;
+
 			free(max_string);
 		}
 
 		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 300, min, 50};
 		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
-		//Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 + 130, SCREEN_HEIGHT / 2 - 25, 50, 50};
+		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 650, 220, 80};
 
 		Rectangle autoBox = (Rectangle){SCREEN_WIDTH/2 - (200 + 200 + 100)/2, 450, 200, 140}; 
 		Rectangle manBox = (Rectangle){SCREEN_WIDTH/2 + (200 + 200 + 100)/2 - 200, 450, 200, 140}; 
@@ -286,7 +294,10 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 		if (MAX_CHAR == -1)
 			MAX_CHAR = 0;
 
-		DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, 360, 20, DARKGRAY);
+		if(letter_count != MAX_CHAR)
+			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, 360, 20, DARKGRAY);
+		else
+			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, 360, 20, MAROON);
 		// TODO
 		// DrawText(TextFormat("PRESS ENTER TO START"), 315, 275, 20, DARKGRAY);
 		// DrawText(TextFormat("PRESS ESC TO EXIT"), 315, 300, 20, DARKGRAY);
@@ -303,10 +314,6 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 				// Draw blinking underscore char
 				if (((framesCounter / 20) % 2) == 0)
 					DrawText("_", (int)textBox.x + 8 + MeasureText(puzzle_str, 35), (int)textBox.y + 12, 35, RAYWHITE);
-			}
-			else if (MAX_CHAR != 0)
-			{
-				DrawText("Press BACKSPACE to delete chars...", 230, 300, 20, GRAY);
 			}
 		}
 
@@ -367,6 +374,16 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 		}
 
 		DrawFPS(10, 10);
+
+		if(CheckCollisionPointRec(GetMousePosition(),enterBox))
+			DrawRectangleRec(enterBox, LIGHTCYAN);
+		else
+			DrawRectangleRec(enterBox, CYAN);
+		
+		DrawRectangleLines((int)enterBox.x, (int)enterBox.y, (int)enterBox.width, (int)enterBox.height, DARKGRAY);	
+		DrawText("START", (int)enterBox.x + ((int)enterBox.width)/2 - MeasureText("START",40)/2, (int)enterBox.y + ((int)enterBox.height)/2 - 20, 40, RAYWHITE);
+
+		DrawText("Press ENTER to start", SCREEN_WIDTH / 2 - MeasureText("Press ENTER to start", 20) / 2, (int)enterBox.y + (int)enterBox.height + 10, 20, DARKGRAY);
 
 		EndDrawing();
 	}
