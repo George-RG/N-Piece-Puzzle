@@ -10,9 +10,9 @@
 
 typedef enum play_mode {
 	NONE,
-	AI,
+	AUTO,
 	MANUAL
-};
+}play_mode;
 
 char *int_to_ascii(int num);
 
@@ -34,6 +34,7 @@ char size_str[] = {0, 0, 0};
 int size_count = 0;
 
 // Mode Globals
+play_mode cur_mode = NONE;
 
 
 void interface_init()
@@ -129,9 +130,14 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 
 		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 300, min, 50};
 		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
-		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 + 130, SCREEN_HEIGHT / 2 - 25, 50, 50};
+		//Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 + 130, SCREEN_HEIGHT / 2 - 25, 50, 50};
+
+		Rectangle autoBox = (Rectangle){SCREEN_WIDTH/2 - (200 + 200 + 100)/2, 450, 200, 140}; 
+		Rectangle manBox = (Rectangle){SCREEN_WIDTH/2 + (200 + 200 + 100)/2 - 200, 450, 200, 140}; 
 		bool mouseOnText = false;
 		bool mouseOnSize = false;
+
+		//Text Boxes Update
 
 		// Update the mouse position
 		if (CheckCollisionPointRec(GetMousePosition(), textBox))
@@ -222,6 +228,25 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 		else
 			framsCounterSize = 0;
 
+		// Button Updates
+		bool mouseOnAuto = false;
+		bool mouseOnMan = false;
+
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), autoBox))
+			cur_mode = AUTO;
+		else if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), manBox))
+			cur_mode = MANUAL;
+
+		if(CheckCollisionPointRec(GetMousePosition(), autoBox))
+			mouseOnAuto = true;
+		else
+			mouseOnAuto = false;
+
+		if(CheckCollisionPointRec(GetMousePosition(), manBox))
+			mouseOnMan = true;
+		else
+			mouseOnMan = false;
+
 		// Draw the text box
 		BeginDrawing();
 
@@ -294,8 +319,54 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 					DrawText("_", (int)sizeBox.x + 8 + MeasureText(size_str, 40), (int)sizeBox.y + 12, 40, RAYWHITE);
 			}
 		}
+		
+		// Draw the buttons
 
-		DrawRectangleRec(enterBox, CYAN);
+		if (cur_mode == AUTO)
+		{
+			DrawRectangleRec(autoBox, CYAN);
+			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width)/2 - MeasureText("AUTO",40)/2, (int)autoBox.y + ((int)autoBox.height)/2 - 20, 40, RAYWHITE);
+
+			DrawRectangleRec(manBox, LLGRAY);
+			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width)/2 - MeasureText("MANUAL",40)/2, (int)manBox.y + ((int)manBox.height)/2 - 20, 40, CYAN);
+		}
+		else if(cur_mode == MANUAL)
+		{
+			DrawRectangleRec(autoBox, LLGRAY);
+			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width)/2 - MeasureText("AUTO",40)/2, (int)autoBox.y + ((int)autoBox.height)/2 - 20, 40, CYAN);
+
+			DrawRectangleRec(manBox, CYAN);
+			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width)/2 - MeasureText("MANUAL",40)/2, (int)manBox.y + ((int)manBox.height)/2 - 20, 40, RAYWHITE);
+		}
+		else
+		{
+			DrawRectangleRec(autoBox, LLGRAY);
+			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width)/2 - MeasureText("AUTO",40)/2, (int)autoBox.y + ((int)autoBox.height)/2 - 20, 40, CYAN);
+
+			DrawRectangleRec(manBox, LLGRAY);
+			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width)/2 - MeasureText("MANUAL",40)/2, (int)manBox.y + ((int)manBox.height)/2 - 20, 40, CYAN);
+		}
+
+		if(mouseOnAuto)
+		{
+			DrawRectangleLines((int)autoBox.x, (int)autoBox.y, (int)autoBox.width, (int)autoBox.height, BLACK);
+
+			DrawRectangleLines((int)manBox.x, (int)manBox.y, (int)manBox.width, (int)manBox.height, DARKGRAY);
+		}
+		else if(mouseOnMan)
+		{
+			DrawRectangleLines((int)autoBox.x, (int)autoBox.y, (int)autoBox.width, (int)autoBox.height, DARKGRAY);
+
+			DrawRectangleLines((int)manBox.x, (int)manBox.y, (int)manBox.width, (int)manBox.height, BLACK);
+		}
+		else
+		{
+			DrawRectangleLines((int)autoBox.x, (int)autoBox.y, (int)autoBox.width, (int)autoBox.height, DARKGRAY);
+
+			DrawRectangleLines((int)manBox.x, (int)manBox.y, (int)manBox.width, (int)manBox.height, DARKGRAY);	
+		}
+
+		DrawFPS(10, 10);
 
 		EndDrawing();
 	}
