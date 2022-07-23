@@ -17,7 +17,7 @@ CC = gcc
 CFLAGS = -Wall -Werror -I$(INCLUDE)
 LDFLAGS = -lm
 
-objects= game.o interface.o 8piece_puzzle.o List.o PQ.o $(LIB)/libraylib.a
+objects= game.o interface.o 8piece_puzzle.o List.o RB.o PQ.o $(LIB)/libraylib.a
 
 EXEC = game.exe
 
@@ -36,7 +36,8 @@ endif
 
 $(EXEC):$(objects)
 	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-	cp $(EXEC) /mnt/c/Users/Georg/Desktop/
+	mv $(EXEC) /mnt/c/Users/Georg/Desktop/
+	rm -f $(EXEC)
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
@@ -46,8 +47,8 @@ $(LIB)/%.a:
 List.o :
 	$(CC) -c $(MODULES)/List.c $(LDFLAGS) $(CFLAGS)
 
-PQImplementation.o :
-	$(CC) -c $(MODULES)/PQImplementation.c $(LDFLAGS) $(CFLAGS)
+RB.o :
+	$(CC) -c $(MODULES)/RB.c $(LDFLAGS) $(CFLAGS)
 
 PQ.o :
 	$(CC) -c $(MODULES)/PQ.c $(LDFLAGS) $(CFLAGS)

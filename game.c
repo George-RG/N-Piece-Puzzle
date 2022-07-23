@@ -8,6 +8,7 @@
 
 //Global variables
 int auto_play=2;
+bool in_menu=true;
 Graphics Graf;
 
 Graphics create_gra_state(int size)
@@ -60,17 +61,31 @@ void update_and_draw() {
         auto_play = !auto_play;
     }
 
-	interface_draw_frame(Graf,(keys_update() ||auto_play),auto_play);
+	interface_draw_frame(Graf,(keys_update() ||auto_play),auto_play,&in_menu);
 }
 
 int main (int argc , char* argv[])
 {
+    int N = atoi(argv[1]);
+
+    Graf = create_gra_state(-1);
+
+    //Graphics
+	interface_init();
+
+    // Η κλήση αυτή καλεί συνεχόμενα την update_and_draw μέχρι ο χρήστης να κλείσει το παράθυρο
+	start_main_loop(update_and_draw);
+
+    return 0;
+
+    in_menu = false;
+
     if(argc != 2)
     {
         printf("Usage: ./puzzle \"Dimention\"\n");
         return -1;
     }
-    int N = atoi(argv[1]);
+    // int N = atoi(argv[1]);
 
     int i,j;
     State* initial_state = malloc(sizeof(State));
@@ -101,7 +116,13 @@ int main (int argc , char* argv[])
             if(flag==0)
                 break;
         }
-    }    
+    }
+
+    if(!IsSolveable(initial_state))
+    {
+        printf("Puzzle is not solvable\n");
+        return -1;
+    }
 
     if(isGoal(*initial_state) == 1)
     {
@@ -109,16 +130,16 @@ int main (int argc , char* argv[])
         return 0;
     }
 
-    ListPtr Visited = CreateList(compare_same,destroyfunc);
+    RB tree = RB_Initialize(destroyfunc_ptr,compare);
     PQ Queue = PQ_Initialize(compare_evals,destroyfunc_ptr);
 
     evaluate(initial_state);
 
-    ListInsert(initial_state,Visited);
+    RB_InsertKey(tree,initial_state);
 
     Graf = create_gra_state(N);
 
-    Graf->move_list = solve(initial_state,Queue,Visited);
+    Graf->move_list = solve(initial_state,Queue,tree);
 
     while(auto_play>1 || auto_play < 0)
     {
@@ -136,7 +157,7 @@ int main (int argc , char* argv[])
 	interface_close();
 
     PQ_Destroy(Queue);
-    freeList(Visited);
+    RB_Destroy(tree);
     free_gra_state(Graf);
 
     return 0;

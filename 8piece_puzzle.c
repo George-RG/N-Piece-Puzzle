@@ -1,24 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "string.h"
 
 #include "8piece_puzzle.h"
 
-void expand(State* cur_state, PQ Queue, ListPtr Visited);
+//void expand(State* cur_state, PQ Queue, ListPtr Visited);
+void expand(State* cur_state, PQ Queue,RB tree);
 State* CopyState(State* cur_state);
 ListPtr ReturnSolution(State* state);
+char* IntToAscii(int number);
 
-
-ListPtr solve(State* state, PQ Queue, ListPtr Visited)
+ListPtr solve(State* state, PQ Queue, RB tree)
 {
     State* cur_state = state;
     while(isGoal(*cur_state) != 1)
     {
-        expand(cur_state,Queue,Visited);
+        expand(cur_state,Queue,tree);
 
         cur_state = (State*)PQ_Pop(Queue);
 
-        ListInsert(cur_state,Visited);
+        RB_InsertKey(tree,cur_state);
     }
 
     ListPtr move_list = ReturnSolution(cur_state);
@@ -26,7 +28,7 @@ ListPtr solve(State* state, PQ Queue, ListPtr Visited)
     return move_list;
 }
 
-void expand(State* cur_state, PQ Queue, ListPtr Visited)
+void expand(State* cur_state, PQ Queue,RB tree)
 {
     int size = cur_state->size;
 
@@ -52,14 +54,15 @@ void expand(State* cur_state, PQ Queue, ListPtr Visited)
             new_state->blank_row = new_row;
             new_state->blank_col = new_col;
             
-            if(ListFind(Visited,new_state) == -1)
+            evaluate(new_state);
+
+            if(RB_Search(tree,new_state) ==  NULL)
             {
-                evaluate(new_state);
                 PQ_Insert(Queue, new_state);
             }
             else
             {
-                destroyfunc(new_state);
+                destroyfunc_ptr(new_state);
             }
         }
     }
@@ -84,20 +87,12 @@ State* CopyState(State* cur_state)
     return new_state;        
 }
 
-int compare_same(PQItem a, PQItem b)
+int compare(Pointer a, Pointer b)
 {
-    int size = a->size;
-    
-    if(size != b->size)
-        return -1;
-    
-    int i,j;
-    for(i=0; i<size; i++)
-        for(j=0; j<size; j++)
-            if(a->board[i][j] != b->board[i][j])
-                return -1;
+    State* state_a = (State*)a;
+    State* state_b = (State*)b;
 
-    return 0;
+    return strcmp(state_a->representation,state_b->representation);
 }
 
 void destroyfunc_ptr(Pointer ptr)
@@ -115,34 +110,33 @@ void destroyfunc_ptr(Pointer ptr)
     free(a);
 }
 
-void destroyfunc(PQItem a)
-{
-    if(a == NULL)
-        return;
-
-    for(int i=0; i<a->size; i++)
-        free(a->board[i]);
-
-    free(a->board);
-
-    free(a);
-}
-
 int compare_evals(Pointer first,Pointer second)
 {
     State* a = (State*)first;
     State* b = (State*)second;
 
     return b->eval - a->eval;
-
-    // if(a->eval <= b->eval)
-    //     return 1;
-
-    // return -1;
 }
 
 void evaluate (State* state)
 {
+    int str_size = 0;
+    int temp = state->size * state->size;
+    if(temp < 10)
+    {
+        str_size = temp;
+    }
+    else
+    {
+        str_size = 10;
+        temp -= 10;
+        temp *= 2;
+        str_size += temp;
+    }
+    state->representation = malloc(sizeof(char) * str_size + 1);
+    state->representation[str_size] = '\0';
+    state->representation[0] = '\0';
+
     int size = state->size;
     int mScore=0,counter=1;
     int i,j;
@@ -150,6 +144,10 @@ void evaluate (State* state)
     {
         for(j=0; j<size; j++)
         {
+            char* temp_str = IntToAscii(state->board[i][j]);
+            strcat(state->representation,temp_str);
+            free(temp_str);
+            
             if(state->board[i][j] == 0)
             {
                 state->blank_row = i;
@@ -203,7 +201,7 @@ int isGoal(State state)
 
 ListPtr ReturnSolution(State* state)
 {
-    ListPtr list = CreateList(compare_same,NULL);
+    ListPtr list = CreateList(NULL,NULL);
     while(state != NULL)
     {
         ListInsert(state,list);
@@ -211,4 +209,62 @@ ListPtr ReturnSolution(State* state)
         state = state->parent;
     }
     return list;
+}
+
+char* IntToAscii(int number)
+{
+    if(number == 0)
+    {
+        char* str = malloc(sizeof(char) * 2);
+        str[0] = '0';
+        str[1] = '\0';
+        return str;
+    }
+
+    int size = 0;
+    int temp = number;
+    while(temp != 0)
+    {
+        temp /= 10;
+        size++;
+    }
+    char* str = malloc(sizeof(char) * size);
+    int i = 0;
+    while(i < size)
+    {
+        str[size - i - 1] = number % 10 + '0';
+        number /= 10;
+        i++;
+    }
+    str[i] = '\0';
+    return str;
+}
+
+int IsSolveable(State* state)
+{
+    int size = state->size;
+    int inv = 0;
+
+    int temp[state->size * state->size];
+    int index = 0;
+
+    for(int i=0; i < size; i++)
+        for(int j=0; j < size; j++)
+            temp[index++] = state->board[i][j];
+
+    for(int i=0; i < size * size - 1; i++)
+    {   
+        if(temp[i] == 0) continue;
+
+        for(int j=i + 1; j < size * size; j++)
+        {
+            if(temp[j] == 0) continue;
+            if (temp[j] && temp[i] && temp[i] > temp[j]) inv++;
+        }
+    }
+
+    if(inv % 2 == 1)
+        return 0;
+    else
+        return 1;
 }

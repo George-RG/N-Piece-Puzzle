@@ -3,6 +3,8 @@
 
 typedef struct _state{
     int eval;
+    char* representation;
+
     int** board;
     struct _state* parent;
     int moves;

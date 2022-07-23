@@ -9,4 +9,4 @@ void interface_init();
 void interface_close();
 
 // Σχεδιάζει ένα frame με την τωρινή κατάσταση του παιχνδιού
-void interface_draw_frame(Graphics state,bool play,int autoplay);
+void interface_draw_frame(Graphics state,bool play,int autoplay,bool* in_menu);
