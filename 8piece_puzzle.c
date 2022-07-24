@@ -62,7 +62,7 @@ void expand(State* cur_state, PQ Queue,RB tree)
             }
             else
             {
-                destroyfunc_ptr(new_state);
+                destroyfunc(new_state);
             }
         }
     }
@@ -95,7 +95,7 @@ int compare(Pointer a, Pointer b)
     return strcmp(state_a->representation,state_b->representation);
 }
 
-void destroyfunc_ptr(Pointer ptr)
+void destroyfunc(Pointer ptr)
 {
     State* a = (State*)ptr;
 

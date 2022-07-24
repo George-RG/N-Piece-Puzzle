@@ -10,7 +10,7 @@ ListPtr solve(State* state, PQ Queue, RB tree);
 int isGoal(State state);
 int compare(Pointer a, Pointer b);
 int compare_evals(Pointer first,Pointer second);
-void destroyfunc_ptr(Pointer ptr);
+void destroyfunc(Pointer ptr);
 void evaluate (State* state);
 int IsSolveable(State* state);
 

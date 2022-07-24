@@ -28,6 +28,7 @@ bool first_time = true;
 bool first_end = true;
 Sound clap;
 bool started = false;
+State* cur_state = NULL;
 
 // Text Box globals
 int framesCounter = 0;
@@ -56,8 +57,10 @@ void interface_init()
 	clap = LoadSound("assets/clap.wav");
 }
 
-void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu)
+void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in_menu)
 {
+	Graphics state = *state_ptr;
+
 	if (*in_menu)
 	{
 		if(started == true && state->move_list == NULL)
@@ -68,6 +71,74 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 				started = false;
 				return;
 			}
+
+			int N = atoi(size_str);
+
+			free_gra_state(state);
+
+			*state_ptr = create_gra_state(N);
+
+			*in_menu = false;
+
+			cur_state = malloc(sizeof(State));
+			cur_state->board = malloc(sizeof(int*) * N);
+			for(int i=0; i<N; i++)
+				cur_state->board[i] = malloc(sizeof(int) * N);
+			cur_state->moves=0;
+			cur_state->parent=NULL;
+			cur_state->size = N;
+
+
+			int col=0,row=0;
+			int i=0,j;
+			char buff[100];
+			int cur;
+			while (puzzle_str[i] != '\0')
+			{
+				j = 0;
+				buff[j] = '\0';
+
+				while(puzzle_str[i] != ' ' && puzzle_str[i] != '\0')
+				{
+					buff[j] = puzzle_str[i];
+					buff[j+1] = '\0';
+					j++;
+					i++;
+				}
+				i++;
+
+				cur = atoi(buff);
+
+				if(cur > N * N -1 || cur < 0)
+				{
+					printf("Invalid puzzle.\n");
+					started = false;
+					destroyfunc(state);
+					state_ptr = create_dumy_state();
+					free(puzzle_str);
+					return;
+				}
+
+				cur_state->board[row][col] = cur;
+
+				col++;
+				if(col == N)
+				{
+					col = 0;
+					row++;
+				}
+			}
+			
+			if(!IsSolveable(cur_state))
+			{
+				printf("Puzzle is not solvable\n");
+				started = false;
+				destroyfunc(state);
+				state_ptr = create_dumy_state();
+				free(puzzle_str);
+				return;
+			}
+			
 		}
 
 
@@ -268,6 +339,11 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 			mouseOnMan = true;
 		else
 			mouseOnMan = false;
+
+		if((CheckCollisionPointRec(GetMousePosition(),enterBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
+		{
+			started = true;
+		}
 
 		// Draw the text box
 		BeginDrawing();
@@ -591,4 +667,65 @@ char* remove_spaces(char* str)
 	strcpy(result, temp);
 	free(temp);
 	return result;
+}
+
+Graphics create_gra_state(int size)
+{
+    Graphics gr = malloc(sizeof(gra_state));
+
+    gr->board_size = size;
+    gr->trans.in_transition =  false;
+
+    //Figuring out where the blocks are going to be
+    gr->edge = (float)SCREEN_HEIGHT / (float)size;
+
+    gr->positions = malloc(sizeof(point*) * size);
+    for(int i=0; i<size; i++)
+        gr->positions[i] = malloc(sizeof(point) * size);
+
+    point offset = {0,0};
+    for(int i=0; i<size; i++)
+    {
+        for(int j=0; j<size; j++)
+        {   
+            gr->positions[i][j] = offset;
+            offset.x += gr->edge;
+        }
+        offset.x = 0;
+        offset.y += gr->edge;
+    }
+
+    return gr;
+}
+
+void free_gra_state(Graphics gr)
+{
+	if(gr != NULL)
+    {
+		if(gr->move_list != NULL)
+			freeList(gr->move_list);
+
+		if(gr->positions != NULL)
+		{
+			for(int i=0; i<gr->board_size; i++)
+				free(gr->positions[i]);
+			free(gr->positions);
+		}
+
+		free(gr);
+	}
+}
+
+Graphics* create_dumy_state(void)
+{
+	Graphics* state_ptr = malloc(sizeof(Graphics));
+	*state_ptr = malloc(sizeof(gra_state));
+
+	Graphics state = *state_ptr; 
+
+	state->board_size = -1;
+    state->move_list = NULL;
+    state->positions = NULL;
+
+	return state_ptr;
 }
