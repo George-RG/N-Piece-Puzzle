@@ -66,9 +66,10 @@ void update_and_draw() {
 
 int main (int argc , char* argv[])
 {
-    int N = atoi(argv[1]);
-
-    Graf = create_gra_state(-1);
+    Graf = malloc(sizeof(gra_state));
+    Graf->board_size = -1;
+    Graf->move_list = NULL;
+    int N = 1;
 
     //Graphics
 	interface_init();

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 #define CYAN \
 	(Color) { 0, 145, 143, 255 } // Cyan
@@ -19,12 +20,14 @@ typedef enum play_mode {
 }play_mode;
 
 char *int_to_ascii(int num);
+char* remove_spaces(char* str);
 
 // Interface Globals
 Texture *textures;
 bool first_time = true;
 bool first_end = true;
 Sound clap;
+bool started = false;
 
 // Text Box globals
 int framesCounter = 0;
@@ -57,6 +60,17 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 {
 	if (*in_menu)
 	{
+		if(started == true && state->move_list == NULL)
+		{
+			if(atoi(size_str) < 2 || atoi(size_str) > 4)
+			{
+				printf("Invalid size.\n");
+				started = false;
+				return;
+			}
+		}
+
+
 		int MAX_CHAR = -1;
 		//int spaces;
 
@@ -70,7 +84,7 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 			{
 				temp -= 9;
 				temp *= 2;
-				temp += 9;
+				temp += 8;
 			}
 			MAX_CHAR--;
 			//spaces = MAX_CHAR;
@@ -260,11 +274,18 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 
 		ClearBackground(RAYWHITE);
 
+		char* shown_str = puzzle_str;
+
+		while(MeasureText(shown_str, 35) > textBox.width - MeasureText("_",35) - 10)
+		{
+			shown_str++;
+		}
+
 		if (mouseOnText)
 		{
 			DrawRectangleRec(textBox, CYAN);
 			DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, BLACK);
-			DrawText(puzzle_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, RAYWHITE);
+			DrawText(shown_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, RAYWHITE);
 
 			DrawRectangleRec(sizeBox, LLGRAY);
 			DrawRectangleLines((int)sizeBox.x, (int)sizeBox.y, (int)sizeBox.width, (int)sizeBox.height, DARKGRAY);
@@ -278,13 +299,13 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 
 			DrawRectangleRec(textBox, LLGRAY);
 			DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
-			DrawText(puzzle_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, CYAN);
+			DrawText(shown_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, CYAN);
 		}
 		else
 		{
 			DrawRectangleRec(textBox, LLGRAY);
 			DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
-			DrawText(puzzle_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, CYAN);
+			DrawText(shown_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, CYAN);
 
 			DrawRectangleRec(sizeBox, LLGRAY);
 			DrawRectangleLines((int)sizeBox.x, (int)sizeBox.y, (int)sizeBox.width, (int)sizeBox.height, DARKGRAY);
@@ -313,7 +334,7 @@ void interface_draw_frame(Graphics state, bool play, int autoplay, bool *in_menu
 			{
 				// Draw blinking underscore char
 				if (((framesCounter / 20) % 2) == 0)
-					DrawText("_", (int)textBox.x + 8 + MeasureText(puzzle_str, 35), (int)textBox.y + 12, 35, RAYWHITE);
+					DrawText("_", (int)textBox.x + 8 + MeasureText(shown_str, 35), (int)textBox.y + 12, 35, RAYWHITE);
 			}
 		}
 
@@ -548,4 +569,26 @@ char *int_to_ascii(int num)
 		buf[2] = 0;
 	}
 	return buf;
+}
+
+char* remove_spaces(char* str)
+{
+	char* temp = malloc(sizeof(char) * strlen(str));
+	int i = 0;
+	int j = 0;
+	while (str[i] != '\0')
+	{
+		if (str[i] != ' ')
+		{
+			temp[j] = str[i];
+			j++;
+		}
+		i++;
+	}
+	temp[j] = '\0';
+
+	char* result = malloc(sizeof(char) * strlen(temp));
+	strcpy(result, temp);
+	free(temp);
+	return result;
 }
