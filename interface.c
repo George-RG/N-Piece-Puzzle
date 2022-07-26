@@ -8,19 +8,20 @@
 	(Color) { 0, 145, 143, 255 } // Cyan
 
 #define LIGHTCYAN \
-	(Color) {8, 119, 134, 255} // Light Cyan
+	(Color) { 8, 119, 134, 255 } // Light Cyan
 
 #define LLGRAY \
 	(Color) { 220, 220, 220, 255 } // Light Light Gray
 
-typedef enum play_mode {
+typedef enum play_mode
+{
 	NONE,
 	AUTO,
 	MANUAL
-}play_mode;
+} play_mode;
 
 char *int_to_ascii(int num);
-char* remove_spaces(char* str);
+char *remove_spaces(char *str);
 
 // Interface Globals
 Texture *textures;
@@ -28,7 +29,7 @@ bool first_time = true;
 bool first_end = true;
 Sound clap;
 bool started = false;
-State* cur_state = NULL;
+State *cur_state = NULL;
 
 // Text Box globals
 int framesCounter = 0;
@@ -44,6 +45,8 @@ int size_count = 0;
 // Mode Globals
 play_mode cur_mode = NONE;
 
+// Solver Globals
+int auto_play = 2;
 
 void interface_init()
 {
@@ -57,15 +60,15 @@ void interface_init()
 	clap = LoadSound("assets/clap.wav");
 }
 
-void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in_menu)
+void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 {
-	Graphics state = *state_ptr;
+	Graphics gr_state = *gr_state_ptr;
 
 	if (*in_menu)
 	{
-		if(started == true && state->move_list == NULL)
+		if (started == true && gr_state->move_list == NULL)
 		{
-			if(atoi(size_str) < 2 || atoi(size_str) > 4)
+			if (atoi(size_str) < 2 || atoi(size_str) > 4)
 			{
 				printf("Invalid size.\n");
 				started = false;
@@ -74,23 +77,21 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 
 			int N = atoi(size_str);
 
-			free_gra_state(state);
+			free_gra_state(gr_state);
 
-			*state_ptr = create_gra_state(N);
-
-			*in_menu = false;
+			*gr_state_ptr = create_gra_state(N);
+			gr_state = *gr_state_ptr;
 
 			cur_state = malloc(sizeof(State));
-			cur_state->board = malloc(sizeof(int*) * N);
-			for(int i=0; i<N; i++)
+			cur_state->board = malloc(sizeof(int *) * N);
+			for (int i = 0; i < N; i++)
 				cur_state->board[i] = malloc(sizeof(int) * N);
-			cur_state->moves=0;
-			cur_state->parent=NULL;
+			cur_state->moves = 0;
+			cur_state->parent = NULL;
 			cur_state->size = N;
 
-
-			int col=0,row=0;
-			int i=0,j;
+			int col = 0, row = 0;
+			int i = 0, j;
 			char buff[100];
 			int cur;
 			while (puzzle_str[i] != '\0')
@@ -98,57 +99,96 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 				j = 0;
 				buff[j] = '\0';
 
-				while(puzzle_str[i] != ' ' && puzzle_str[i] != '\0')
+				while (puzzle_str[i] != ' ' && puzzle_str[i] != '\0')
 				{
 					buff[j] = puzzle_str[i];
-					buff[j+1] = '\0';
+					buff[j + 1] = '\0';
 					j++;
 					i++;
 				}
-				i++;
+				if (puzzle_str[i] == ' ')
+					i++;
 
 				cur = atoi(buff);
 
-				if(cur > N * N -1 || cur < 0)
+				if (cur > N * N - 1 || cur < 0)
 				{
 					printf("Invalid puzzle.\n");
 					started = false;
-					destroyfunc(state);
-					state_ptr = create_dumy_state();
-					free(puzzle_str);
+					destroyfunc(cur_state);
+					gr_state_ptr = create_dumy_state();
+					letter_count = 0;
+					puzzle_str[0] = '\0';
 					return;
 				}
 
 				cur_state->board[row][col] = cur;
 
 				col++;
-				if(col == N)
+				if (col == N)
 				{
 					col = 0;
 					row++;
 				}
 			}
-			
-			if(!IsSolveable(cur_state))
+
+			if (!IsSolveable(cur_state))
 			{
 				printf("Puzzle is not solvable\n");
 				started = false;
-				destroyfunc(state);
-				state_ptr = create_dumy_state();
-				free(puzzle_str);
+				destroyfunc(cur_state);
+				gr_state_ptr = create_dumy_state();
+				letter_count = 0;
+				puzzle_str[0] = '\0';
 				return;
 			}
-			
+
+			if (isGoal(*cur_state) == 1)
+			{
+				printf("This puzzle is already solved\n");
+				started = false;
+				destroyfunc(cur_state);
+				gr_state_ptr = create_dumy_state();
+				return;
+			}
+
+			if(cur_mode == NONE)
+			{
+				printf("No mode selected\n");
+				started = false;
+				destroyfunc(cur_state);
+				gr_state_ptr = create_dumy_state();
+				return;
+			}
+
+			if(cur_mode == AUTO)
+			{
+				RB tree = RB_Initialize(destroyfunc,compare);
+    			PQ Queue = PQ_Initialize(compare_evals,destroyfunc);
+
+				evaluate(cur_state);
+
+				RB_InsertKey(tree,cur_state);
+
+				printf("BestDev = GeorgeRG\n");
+
+				gr_state->move_list = solve(cur_state,Queue,tree);
+
+				printf("Queue Size: %d\n",PQ_Size(Queue));
+				printf("Tree Size: %d\n",RB_Size(tree));
+				printf("Total: %d\n",RB_Size(tree)+ PQ_Size(Queue));
+			}
+
+			*in_menu = false;
 		}
 
-
 		int MAX_CHAR = -1;
-		//int spaces;
+		// int spaces;
 
 		// Update the string
-		if (state->board_size != -1)
+		if (gr_state->board_size != -1)
 		{
-			MAX_CHAR = state->board_size * state->board_size;
+			MAX_CHAR = gr_state->board_size * gr_state->board_size;
 
 			int temp = MAX_CHAR;
 			if (temp > 9)
@@ -158,11 +198,11 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 				temp += 8;
 			}
 			MAX_CHAR--;
-			//spaces = MAX_CHAR;
+			// spaces = MAX_CHAR;
 			MAX_CHAR += temp;
 		}
 
-		if (MAX_CHAR != OLD_MAX)
+		if (MAX_CHAR != OLD_MAX && MAX_CHAR > 1)
 		{
 			OLD_MAX = MAX_CHAR;
 
@@ -184,27 +224,27 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 			max_string = malloc(sizeof(char) * MAX_CHAR + 1);
 			for (int i = 0; i < MAX_CHAR; i++)
 			{
-				if(i < 9 + 9) // 9 chars and 9 spaces
+				if (i < 9 + 9) // 9 chars and 9 spaces
 				{
-					if(i % 2 == 0)
+					if (i % 2 == 0)
 						max_string[i] = '0';
 					else
 						max_string[i] = ' ';
 				}
-				else 
+				else
 				{
-					if((i-20) % 3 == 0)
+					if ((i - 20) % 3 == 0)
 						max_string[i] = ' ';
-					else if(i < 19 + 9) // 19 chars and 9 spaces
+					else if (i < 19 + 9) // 19 chars and 9 spaces
 					{
-						if(temp % 2 == 0)
+						if (temp % 2 == 0)
 							max_string[i] = '1';
 						else
 							max_string[i] = '0';
-						
+
 						temp++;
 					}
-					else	
+					else
 						max_string[i] = '0';
 				}
 			}
@@ -225,12 +265,12 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
 		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 650, 220, 80};
 
-		Rectangle autoBox = (Rectangle){SCREEN_WIDTH/2 - (200 + 200 + 100)/2, 450, 200, 140}; 
-		Rectangle manBox = (Rectangle){SCREEN_WIDTH/2 + (200 + 200 + 100)/2 - 200, 450, 200, 140}; 
+		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
+		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 450, 200, 140};
 		bool mouseOnText = false;
 		bool mouseOnSize = false;
 
-		//Text Boxes Update
+		// Text Boxes Update
 
 		// Update the mouse position
 		if (CheckCollisionPointRec(GetMousePosition(), textBox))
@@ -304,9 +344,9 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 			}
 
 			if (size_str[0] != '\0')
-				state->board_size = atoi(size_str);
+				gr_state->board_size = atoi(size_str);
 			else
-				state->board_size = 0;
+				gr_state->board_size = 0;
 		}
 		else
 			SetMouseCursor(MOUSE_CURSOR_DEFAULT);
@@ -325,22 +365,22 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 		bool mouseOnAuto = false;
 		bool mouseOnMan = false;
 
-		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), autoBox))
+		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), autoBox))
 			cur_mode = AUTO;
-		else if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), manBox))
+		else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), manBox))
 			cur_mode = MANUAL;
 
-		if(CheckCollisionPointRec(GetMousePosition(), autoBox))
+		if (CheckCollisionPointRec(GetMousePosition(), autoBox))
 			mouseOnAuto = true;
 		else
 			mouseOnAuto = false;
 
-		if(CheckCollisionPointRec(GetMousePosition(), manBox))
+		if (CheckCollisionPointRec(GetMousePosition(), manBox))
 			mouseOnMan = true;
 		else
 			mouseOnMan = false;
 
-		if((CheckCollisionPointRec(GetMousePosition(),enterBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
+		if ((CheckCollisionPointRec(GetMousePosition(), enterBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
 		{
 			started = true;
 		}
@@ -350,9 +390,14 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 
 		ClearBackground(RAYWHITE);
 
-		char* shown_str = puzzle_str;
+		char *shown_str = puzzle_str;
 
-		while(MeasureText(shown_str, 35) > textBox.width - MeasureText("_",35) - 10)
+		int guard = -10;
+
+		if(letter_count < MAX_CHAR)
+			guard -= MeasureText("_", 35);
+
+		while (MeasureText(shown_str, 35) > textBox.width + guard)
 		{
 			shown_str++;
 		}
@@ -391,7 +436,7 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 		if (MAX_CHAR == -1)
 			MAX_CHAR = 0;
 
-		if(letter_count != MAX_CHAR)
+		if (letter_count != MAX_CHAR)
 			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, 360, 20, DARKGRAY);
 		else
 			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, 360, 20, MAROON);
@@ -423,41 +468,41 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 					DrawText("_", (int)sizeBox.x + 8 + MeasureText(size_str, 40), (int)sizeBox.y + 12, 40, RAYWHITE);
 			}
 		}
-		
+
 		// Draw the buttons
 
 		if (cur_mode == AUTO)
 		{
 			DrawRectangleRec(autoBox, CYAN);
-			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width)/2 - MeasureText("AUTO",40)/2, (int)autoBox.y + ((int)autoBox.height)/2 - 20, 40, RAYWHITE);
+			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width) / 2 - MeasureText("AUTO", 40) / 2, (int)autoBox.y + ((int)autoBox.height) / 2 - 20, 40, RAYWHITE);
 
 			DrawRectangleRec(manBox, LLGRAY);
-			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width)/2 - MeasureText("MANUAL",40)/2, (int)manBox.y + ((int)manBox.height)/2 - 20, 40, CYAN);
+			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width) / 2 - MeasureText("MANUAL", 40) / 2, (int)manBox.y + ((int)manBox.height) / 2 - 20, 40, CYAN);
 		}
-		else if(cur_mode == MANUAL)
+		else if (cur_mode == MANUAL)
 		{
 			DrawRectangleRec(autoBox, LLGRAY);
-			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width)/2 - MeasureText("AUTO",40)/2, (int)autoBox.y + ((int)autoBox.height)/2 - 20, 40, CYAN);
+			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width) / 2 - MeasureText("AUTO", 40) / 2, (int)autoBox.y + ((int)autoBox.height) / 2 - 20, 40, CYAN);
 
 			DrawRectangleRec(manBox, CYAN);
-			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width)/2 - MeasureText("MANUAL",40)/2, (int)manBox.y + ((int)manBox.height)/2 - 20, 40, RAYWHITE);
+			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width) / 2 - MeasureText("MANUAL", 40) / 2, (int)manBox.y + ((int)manBox.height) / 2 - 20, 40, RAYWHITE);
 		}
 		else
 		{
 			DrawRectangleRec(autoBox, LLGRAY);
-			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width)/2 - MeasureText("AUTO",40)/2, (int)autoBox.y + ((int)autoBox.height)/2 - 20, 40, CYAN);
+			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width) / 2 - MeasureText("AUTO", 40) / 2, (int)autoBox.y + ((int)autoBox.height) / 2 - 20, 40, CYAN);
 
 			DrawRectangleRec(manBox, LLGRAY);
-			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width)/2 - MeasureText("MANUAL",40)/2, (int)manBox.y + ((int)manBox.height)/2 - 20, 40, CYAN);
+			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width) / 2 - MeasureText("MANUAL", 40) / 2, (int)manBox.y + ((int)manBox.height) / 2 - 20, 40, CYAN);
 		}
 
-		if(mouseOnAuto)
+		if (mouseOnAuto)
 		{
 			DrawRectangleLines((int)autoBox.x, (int)autoBox.y, (int)autoBox.width, (int)autoBox.height, BLACK);
 
 			DrawRectangleLines((int)manBox.x, (int)manBox.y, (int)manBox.width, (int)manBox.height, DARKGRAY);
 		}
-		else if(mouseOnMan)
+		else if (mouseOnMan)
 		{
 			DrawRectangleLines((int)autoBox.x, (int)autoBox.y, (int)autoBox.width, (int)autoBox.height, DARKGRAY);
 
@@ -467,46 +512,46 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 		{
 			DrawRectangleLines((int)autoBox.x, (int)autoBox.y, (int)autoBox.width, (int)autoBox.height, DARKGRAY);
 
-			DrawRectangleLines((int)manBox.x, (int)manBox.y, (int)manBox.width, (int)manBox.height, DARKGRAY);	
+			DrawRectangleLines((int)manBox.x, (int)manBox.y, (int)manBox.width, (int)manBox.height, DARKGRAY);
 		}
 
 		DrawFPS(10, 10);
 
-		if(CheckCollisionPointRec(GetMousePosition(),enterBox))
+		if (CheckCollisionPointRec(GetMousePosition(), enterBox))
 			DrawRectangleRec(enterBox, LIGHTCYAN);
 		else
 			DrawRectangleRec(enterBox, CYAN);
-		
-		DrawRectangleLines((int)enterBox.x, (int)enterBox.y, (int)enterBox.width, (int)enterBox.height, DARKGRAY);	
-		DrawText("START", (int)enterBox.x + ((int)enterBox.width)/2 - MeasureText("START",40)/2, (int)enterBox.y + ((int)enterBox.height)/2 - 20, 40, RAYWHITE);
+
+		DrawRectangleLines((int)enterBox.x, (int)enterBox.y, (int)enterBox.width, (int)enterBox.height, DARKGRAY);
+		DrawText("START", (int)enterBox.x + ((int)enterBox.width) / 2 - MeasureText("START", 40) / 2, (int)enterBox.y + ((int)enterBox.height) / 2 - 20, 40, RAYWHITE);
 
 		DrawText("Press ENTER to start", SCREEN_WIDTH / 2 - MeasureText("Press ENTER to start", 20) / 2, (int)enterBox.y + (int)enterBox.height + 10, 20, DARKGRAY);
 
 		EndDrawing();
 	}
-	else
+	else if(cur_mode == AUTO)
 	{
-		State *prev = ListGetNth(state->move_list, 1);
+		State *prev = ListGetNth(gr_state->move_list, 1);
 
 		BeginDrawing();
 
 		// Καθαρισμός, θα τα σχεδιάσουμε όλα από την αρχή
-		ClearBackground(BLACK);
+		ClearBackground(CYAN);
 
-		if ((play == false && state->trans.in_transition == false) || isGoal(*prev) || first_time == true)
+		if ((play == false && gr_state->trans.in_transition == false) || isGoal(*prev) || first_time == true)
 		{
-			for (int i = 0; i < state->board_size; i++)
-				for (int j = 0; j < state->board_size; j++)
+			for (int i = 0; i < gr_state->board_size; i++)
+				for (int j = 0; j < gr_state->board_size; j++)
 					if (prev->board[i][j] != 0)
 					{
-						DrawRectangle(state->positions[i][j].x + 10, state->positions[i][j].y + 10, state->edge - 20, state->edge - 20, WHITE);
-						// DrawTexture(textures[ListGetNth(state->move_list,1)->board[i][j]-1],state->positions[i][j].x,state->positions[i][j].y,WHITE);
-						char *buf = int_to_ascii(ListGetNth(state->move_list, 1)->board[i][j]);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+						// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
+						char *buf = int_to_ascii(ListGetNth(gr_state->move_list, 1)->board[i][j]);
 						DrawText(
 							buf,
-							state->positions[i][j].x + state->edge / 2 - MeasureText(buf, (int)(state->edge / 2)) / 2,
-							state->positions[i][j].y + state->edge / 2 - 50,
-							(int)(state->edge / 2), BLACK);
+							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+							gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+							(int)(gr_state->edge / 2), BLACK);
 						free(buf);
 					}
 
@@ -548,73 +593,103 @@ void interface_draw_frame(Graphics* state_ptr, bool play, int autoplay, bool *in
 		}
 		else
 		{
-			State *next = ListGetNth(state->move_list, 2);
+			State *next = ListGetNth(gr_state->move_list, 2);
 
-			if (!state->trans.in_transition)
+			if (!gr_state->trans.in_transition)
 			{
-				state->trans.in_transition = true;
+				gr_state->trans.in_transition = true;
 
-				state->trans.offset_row = prev->blank_row - next->blank_row;
-				state->trans.offset_col = prev->blank_col - next->blank_col;
+				gr_state->trans.offset_row = prev->blank_row - next->blank_row;
+				gr_state->trans.offset_col = prev->blank_col - next->blank_col;
 
-				for (int i = 0; i < state->board_size; i++)
-					for (int j = 0; j < state->board_size; j++)
+				for (int i = 0; i < gr_state->board_size; i++)
+					for (int j = 0; j < gr_state->board_size; j++)
 						if (prev->board[i][j] != 0)
 						{
-							DrawRectangle(state->positions[i][j].x + 10, state->positions[i][j].y + 10, state->edge - 20, state->edge - 20, WHITE);
-							// DrawTexture(textures[ListGetNth(state->move_list,1)->board[i][j]-1],state->positions[i][j].x,state->positions[i][j].y,WHITE);
-							char *buf = int_to_ascii(ListGetNth(state->move_list, 1)->board[i][j]);
+							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
+							char *buf = int_to_ascii(ListGetNth(gr_state->move_list, 1)->board[i][j]);
 							DrawText(
 								buf,
-								state->positions[i][j].x + state->edge / 2 - MeasureText(buf, (int)(state->edge / 2)) / 2,
-								state->positions[i][j].y + state->edge / 2 - 50,
-								(int)(state->edge / 2), BLACK);
+								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+								gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+								(int)(gr_state->edge / 2), BLACK);
 							free(buf);
 						}
 			}
 			else
 			{
-				float off_row = state->trans.offset_row * (state->edge / ANIMATION_SPEED);
-				float off_col = state->trans.offset_col * (state->edge / ANIMATION_SPEED);
-				state->positions[next->blank_row][next->blank_col].x += off_col;
-				state->positions[next->blank_row][next->blank_col].y += off_row;
+				float off_row = gr_state->trans.offset_row * (gr_state->edge / ANIMATION_SPEED);
+				float off_col = gr_state->trans.offset_col * (gr_state->edge / ANIMATION_SPEED);
+				gr_state->positions[next->blank_row][next->blank_col].x += off_col;
+				gr_state->positions[next->blank_row][next->blank_col].y += off_row;
 
-				for (int i = 0; i < state->board_size; i++)
-					for (int j = 0; j < state->board_size; j++)
-						if (ListGetNth(state->move_list, 1)->board[i][j] != 0)
+				for (int i = 0; i < gr_state->board_size; i++)
+					for (int j = 0; j < gr_state->board_size; j++)
+						if (ListGetNth(gr_state->move_list, 1)->board[i][j] != 0)
 						{
-							DrawRectangle(state->positions[i][j].x + 10, state->positions[i][j].y + 10, state->edge - 20, state->edge - 20, WHITE);
-							// DrawTexture(textures[ListGetNth(state->move_list,1)->board[i][j]-1],state->positions[i][j].x,state->positions[i][j].y,WHITE);
-							char *buf = int_to_ascii(ListGetNth(state->move_list, 1)->board[i][j]);
+							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
+							char *buf = int_to_ascii(ListGetNth(gr_state->move_list, 1)->board[i][j]);
 							DrawText(
 								buf,
-								state->positions[i][j].x + state->edge / 2 - MeasureText(buf, (int)(state->edge / 2)) / 2,
-								state->positions[i][j].y + state->edge / 2 - 50,
-								(int)(state->edge / 2), BLACK);
+								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+								gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+								(int)(gr_state->edge / 2), BLACK);
 							free(buf);
 						}
 
-				point blank_next = state->positions[next->blank_row][next->blank_col];
-				point blank_prev = state->positions[prev->blank_row][prev->blank_col];
+				point blank_next = gr_state->positions[next->blank_row][next->blank_col];
+				point blank_prev = gr_state->positions[prev->blank_row][prev->blank_col];
 
 				if (blank_next.x == blank_prev.x && blank_next.y == blank_prev.y)
 				{
-					ListRemove_nth(state->move_list, 1);
-					state->trans.in_transition = false;
-					off_row = state->trans.offset_row * state->edge;
-					off_col = state->trans.offset_col * state->edge;
-					state->positions[next->blank_row][next->blank_col].x -= off_col;
-					state->positions[next->blank_row][next->blank_col].y -= off_row;
+					ListRemove_nth(gr_state->move_list, 1);
+					gr_state->trans.in_transition = false;
+					off_row = gr_state->trans.offset_row * gr_state->edge;
+					off_col = gr_state->trans.offset_col * gr_state->edge;
+					gr_state->positions[next->blank_row][next->blank_col].x -= off_col;
+					gr_state->positions[next->blank_row][next->blank_col].y -= off_row;
 				}
 			}
 
-			if (autoplay)
-			{
-				DrawText(
-					"PRESS [A] TO DISABLE AUTO-PLAY",
-					GetScreenWidth() - MeasureText("PRESS [A] TO DISABLE AUTO-PLAY", 20) - 20,
-					20, 20, BLUE);
-			}
+			// if (autoplay)
+			// {
+			// 	DrawText(
+			// 		"PRESS [A] TO DISABLE AUTO-PLAY",
+			// 		GetScreenWidth() - MeasureText("PRESS [A] TO DISABLE AUTO-PLAY", 20) - 20,
+			// 		20, 20, BLUE);
+			// }
+		}
+
+		EndDrawing();
+	}
+	else if(cur_mode == MANUAL)
+	{
+		//Updating 
+		State* drawn_state = cur_state;
+		
+		// Drawing move
+		BeginDrawing();
+
+		ClearBackground(CYAN);
+
+		if(gr_state->trans.in_transition == false || isGoal(*drawn_state))
+		{
+			for (int i = 0; i < gr_state->board_size; i++)
+				for (int j = 0; j < gr_state->board_size; j++)
+					if (drawn_state->board[i][j] != 0)
+					{
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+						// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
+						char *buf = int_to_ascii(drawn_state->board[i][j]);
+						DrawText(
+							buf,
+							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+							gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+							(int)(gr_state->edge / 2), BLACK);
+						free(buf);
+					}
 		}
 
 		EndDrawing();
@@ -647,9 +722,9 @@ char *int_to_ascii(int num)
 	return buf;
 }
 
-char* remove_spaces(char* str)
+char *remove_spaces(char *str)
 {
-	char* temp = malloc(sizeof(char) * strlen(str));
+	char *temp = malloc(sizeof(char) * strlen(str));
 	int i = 0;
 	int j = 0;
 	while (str[i] != '\0')
@@ -663,7 +738,7 @@ char* remove_spaces(char* str)
 	}
 	temp[j] = '\0';
 
-	char* result = malloc(sizeof(char) * strlen(temp));
+	char *result = malloc(sizeof(char) * strlen(temp));
 	strcpy(result, temp);
 	free(temp);
 	return result;
@@ -671,43 +746,43 @@ char* remove_spaces(char* str)
 
 Graphics create_gra_state(int size)
 {
-    Graphics gr = malloc(sizeof(gra_state));
+	Graphics gr = malloc(sizeof(gra_state));
 
-    gr->board_size = size;
-    gr->trans.in_transition =  false;
+	gr->board_size = size;
+	gr->trans.in_transition = false;
 
-    //Figuring out where the blocks are going to be
-    gr->edge = (float)SCREEN_HEIGHT / (float)size;
+	// Figuring out where the blocks are going to be
+	gr->edge = (float)SCREEN_HEIGHT / (float)size;
 
-    gr->positions = malloc(sizeof(point*) * size);
-    for(int i=0; i<size; i++)
-        gr->positions[i] = malloc(sizeof(point) * size);
+	gr->positions = malloc(sizeof(point *) * size);
+	for (int i = 0; i < size; i++)
+		gr->positions[i] = malloc(sizeof(point) * size);
 
-    point offset = {0,0};
-    for(int i=0; i<size; i++)
-    {
-        for(int j=0; j<size; j++)
-        {   
-            gr->positions[i][j] = offset;
-            offset.x += gr->edge;
-        }
-        offset.x = 0;
-        offset.y += gr->edge;
-    }
+	point offset = {0, 0};
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			gr->positions[i][j] = offset;
+			offset.x += gr->edge;
+		}
+		offset.x = 0;
+		offset.y += gr->edge;
+	}
 
-    return gr;
+	return gr;
 }
 
 void free_gra_state(Graphics gr)
 {
-	if(gr != NULL)
-    {
-		if(gr->move_list != NULL)
+	if (gr != NULL)
+	{
+		if (gr->move_list != NULL)
 			freeList(gr->move_list);
 
-		if(gr->positions != NULL)
+		if (gr->positions != NULL)
 		{
-			for(int i=0; i<gr->board_size; i++)
+			for (int i = 0; i < gr->board_size; i++)
 				free(gr->positions[i]);
 			free(gr->positions);
 		}
@@ -716,16 +791,16 @@ void free_gra_state(Graphics gr)
 	}
 }
 
-Graphics* create_dumy_state(void)
+Graphics *create_dumy_state(void)
 {
-	Graphics* state_ptr = malloc(sizeof(Graphics));
-	*state_ptr = malloc(sizeof(gra_state));
+	Graphics *gr_state_ptr = malloc(sizeof(Graphics));
+	*gr_state_ptr = malloc(sizeof(gra_state));
 
-	Graphics state = *state_ptr; 
+	Graphics gr_state = *gr_state_ptr;
 
-	state->board_size = -1;
-    state->move_list = NULL;
-    state->positions = NULL;
+	gr_state->board_size = -1;
+	gr_state->move_list = NULL;
+	gr_state->positions = NULL;
 
-	return state_ptr;
+	return gr_state_ptr;
 }

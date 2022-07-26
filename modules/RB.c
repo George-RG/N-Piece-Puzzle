@@ -37,6 +37,11 @@ RB RB_Initialize(DestroyFunc Destroy,CompareFunc Compare)
     return tree;
 }
 
+int RB_Size(RB tree)
+{
+    return tree->count;
+}
+
 void FreeR(NodePtr root, void (*DestroyFunc)(Pointer))
 {
     if(root == NullNode)

@@ -15,5 +15,6 @@ int RB_InsertKey(RB tree, Pointer key); //Returns -1 in case the insertion faile
 NodePtr RB_Search(RB tree, Pointer key);
 void RB_PrintElements(RB tree,void(*Visit)(Pointer));
 Pointer RB_DataFromNode(NodePtr node);
+int RB_Size(RB tree);
 void RB_print2D(RB tree);
 void RB_Destroy(RB tree);

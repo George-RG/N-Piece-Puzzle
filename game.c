@@ -5,9 +5,9 @@
 #include "interface.h"
 
 //Global variables
-int auto_play=2;
 bool in_menu=true;
 Graphics Graf;
+int auto_test = 2;
 
 bool keys_update(void)
 {   
@@ -18,10 +18,10 @@ bool keys_update(void)
 void update_and_draw() {
     if(IsKeyPressed(KEY_A))
     {
-        auto_play = !auto_play;
+        auto_test = !auto_test;
     }
 
-	interface_draw_frame(&Graf,(keys_update() ||auto_play),auto_play,&in_menu);
+	interface_draw_frame(&Graf,(keys_update() ||auto_test),&in_menu);
 }
 
 int main (int argc , char* argv[])
@@ -83,17 +83,17 @@ int main (int argc , char* argv[])
     //     }
     // }
 
-    if(!IsSolveable(initial_state))
-    {
-        printf("Puzzle is not solvable\n");
-        return -1;
-    }
+    // if(!IsSolveable(initial_state))
+    // {
+    //     printf("Puzzle is not solvable\n");
+    //     return -1;
+    // }
 
-    if(isGoal(*initial_state) == 1)
-    {
-        printf("This puzzle is already solved\n");
-        return 0;
-    }
+    // if(isGoal(*initial_state) == 1)
+    // {
+    //     printf("This puzzle is already solved\n");
+    //     return 0;
+    // }
 
     RB tree = RB_Initialize(destroyfunc,compare);
     PQ Queue = PQ_Initialize(compare_evals,destroyfunc);
@@ -106,12 +106,12 @@ int main (int argc , char* argv[])
 
     Graf->move_list = solve(initial_state,Queue,tree);
 
-    while(auto_play>1 || auto_play < 0)
-    {
-        printf("Type 1 for auto solve or 0 for step solving (Proceed steps with [ENTER]): ");
-        //scanf("%d",&auto_play);
-        printf("You can enable/disable auto mode later by pressing [A]\n");
-    }
+    // while(auto_play>1 || auto_play < 0)
+    // {
+    //     printf("Type 1 for auto solve or 0 for step solving (Proceed steps with [ENTER]): ");
+    //     //scanf("%d",&auto_play);
+    //     printf("You can enable/disable auto mode later by pressing [A]\n");
+    // }
 
     //Graphics
 	interface_init();
