@@ -5,6 +5,9 @@
 
 #include "raylib.h"
 
+#define SCREEN_HEIGHT 900
+#define SCREEN_WIDTH  900
+
 // Αρχικοποιεί το interface του παιχνιδιού
 void interface_init();
 

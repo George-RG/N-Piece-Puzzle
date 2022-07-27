@@ -1,9 +1,23 @@
 #include "PQ.h"
-#include "ListInterface.h"
+#include "List.h"
 #include "RB.h"
 
-#define SCREEN_HEIGHT 900
-#define SCREEN_WIDTH  900
+typedef struct _state{
+    int eval;
+    char* representation;
+
+    struct _state* parent;
+    int moves;
+
+    int** board;
+    struct _state* parent;
+    int moves;
+    int blank_row;
+    int blank_col;
+    int size;
+} State;
+
+typedef State* PQItem;
 
 //ListPtr solve(State* state, PQ Queue, ListPtr Visited);
 ListPtr solve(State* state, PQ Queue, RB tree);

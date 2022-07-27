@@ -1,6 +1,7 @@
 # paths
 LIB = ./lib
 INCLUDE = ./include
+INCLUDE2 = ./include/raylib
 MODULES = ./modules
 
 DEBUG = false
@@ -14,12 +15,12 @@ ARGS = 3
 CC = gcc
 
 #compiler options
-CFLAGS = -Wall -Werror -I$(INCLUDE)
+CFLAGS = -Wall -Werror -I$(INCLUDE) -I$(INCLUDE2)
 LDFLAGS = -lm
 
 objects= game.o interface.o 8piece_puzzle.o List.o RB.o PQ.o $(LIB)/libraylib.a
 
-EXEC = game
+EXEC = game.exe
 
 ifeq ($(DEBUG),true)
 	CFLAGS += -g3 -O0
@@ -36,8 +37,8 @@ endif
 
 $(EXEC):$(objects)
 	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-# mv $(EXEC) /mnt/c/Users/Georg/Desktop/
-# rm -f $(EXEC)
+	mv $(EXEC) /mnt/c/Users/Georg/Desktop/
+	rm -f $(EXEC)
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
@@ -65,8 +66,8 @@ interface.o :
 #Cleaning
 PHONY clean:
 	rm -f $(objects) $(EXEC)
-# cd /mnt/c/Users/Georg/Desktop/ 
-# rm -f $(EXEC)
+	cd /mnt/c/Users/Georg/Desktop/ 
+	rm -f $(EXEC)
 
 valgrind: $(EXEC)
 	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)

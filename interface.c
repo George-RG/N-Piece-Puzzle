@@ -546,7 +546,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
 						// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
-						char *buf = int_to_ascii(ListGetNth(gr_state->move_list, 1)->board[i][j]);
+						char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 						DrawText(
 							buf,
 							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -608,7 +608,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
 							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
-							char *buf = int_to_ascii(ListGetNth(gr_state->move_list, 1)->board[i][j]);
+							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -626,11 +626,11 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				for (int i = 0; i < gr_state->board_size; i++)
 					for (int j = 0; j < gr_state->board_size; j++)
-						if (ListGetNth(gr_state->move_list, 1)->board[i][j] != 0)
+						if (((State*)ListGetNth(gr_state->move_list, 1))->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
 							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
-							char *buf = int_to_ascii(ListGetNth(gr_state->move_list, 1)->board[i][j]);
+							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,

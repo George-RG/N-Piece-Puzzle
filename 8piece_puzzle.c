@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "string.h"
+#include <string.h>
 
 #include "8piece_puzzle.h"
 

@@ -1,10 +1,11 @@
 #include<stdio.h>
 #include <stdlib.h>
+
 #include "ListInterface.h"
 
 typedef struct _node
 {
-    PQItem value;
+    Pointer value;
     struct _node* Link;
 }ListNode;
 
@@ -12,17 +13,17 @@ typedef struct _list
 {
     int count;
     ListNode* first;
-    int (*CompareFunc)(PQItem a, PQItem b);
-   void (*DestroyFunc)(PQItem a);
+    CompareFunc compare;
+    DestroyFunc destroy;
 }List;
 
-ListPtr CreateList(int (*compare)(PQItem,PQItem),void (*destory)(PQItem a))
+ListPtr CreateList(CompareFunc compare,DestroyFunc destroy)
 {
     ListPtr ls = malloc(sizeof(List));
     ls->count=0;
     ls->first=NULL;
-    ls->CompareFunc=compare;
-    ls->DestroyFunc = destory;
+    ls->compare=compare;
+    ls->destroy = destroy;
     return ls;
 }
 
@@ -31,7 +32,7 @@ int ListEmpty(ListPtr ls)
     return(ls->count == 0);
 }
 
-void ListInsert(PQItem Item, ListPtr ls)
+void ListInsert(Pointer Item, ListPtr ls)
 {
     ls->count++;
 
@@ -41,9 +42,9 @@ void ListInsert(PQItem Item, ListPtr ls)
     ls->first->Link=temp;
 }
 
-PQItem ListRemove_nth(ListPtr ls, int N)
+Pointer ListRemove_nth(ListPtr ls, int N)
 {
-    PQItem temp;
+    Pointer temp;
     ListNode* cursor=ls->first;
     ListNode* temp_free;
     int i;
@@ -75,14 +76,14 @@ PQItem ListRemove_nth(ListPtr ls, int N)
     return temp;
 }
 
-int ListFind(ListPtr ls, PQItem value)
+int ListFind(ListPtr ls, Pointer value)
 {
     int i;
     ListNode* cursor=ls->first;
 
     for(i=0;i<ls->count;i++)
     {   
-        if(!ls->CompareFunc(cursor->value, value))
+        if(!ls->compare(cursor->value, value))
             return i+1;
     
         cursor=cursor->Link;
@@ -98,14 +99,14 @@ void freeList(ListPtr ls)
     {
         temp = ls->first;
         ls->first = ls->first->Link;
-        if(ls->DestroyFunc!=NULL)
-            ls->DestroyFunc(temp->value);
+        if(ls->destroy!=NULL)
+            ls->destroy(temp->value);
         free(temp);
     }
     free(ls);
 }
 
-PQItem ListGetNth(ListPtr ls, int N)
+Pointer ListGetNth(ListPtr ls, int N)
 {
     ListNode* temp = ls->first;
     if(ls->first == NULL)
