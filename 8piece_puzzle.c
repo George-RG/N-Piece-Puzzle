@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "8piece_puzzle.h"
+#include "include/8piece_puzzle.h"
 
 //void expand(State* cur_state, PQ Queue, ListPtr Visited);
 void expand(State* cur_state, PQ Queue,RB tree);
@@ -48,13 +48,15 @@ void expand(State* cur_state, PQ Queue,RB tree)
 
         if(new_col >= 0 && new_col < size && new_row >= 0 && new_row < size /* && (cur_state->parent == NULL || (new_col != cur_state->parent->blank_col && new_row != cur_state->parent->blank_row)) */ )
         {
-            new_state = CopyState(cur_state);   
+            new_state = CopyState(cur_state);  
             new_state->board[cur_state->blank_row][cur_state->blank_col] = cur_state->board[new_row][new_col];
             new_state->board[new_row][new_col]=0;
             new_state->blank_row = new_row;
             new_state->blank_col = new_col;
             
             evaluate(new_state);
+
+            new_state->eval += new_state->moves;
 
             if(RB_Search(tree,new_state) ==  NULL)
             {
@@ -174,7 +176,7 @@ void evaluate (State* state)
         }
     }
 
-    state->eval = mScore + state->moves;
+    state->eval = mScore;
     return;
 }
 
@@ -228,7 +230,7 @@ char* IntToAscii(int number)
         temp /= 10;
         size++;
     }
-    char* str = malloc(sizeof(char) * size);
+    char* str = malloc(sizeof(char) * size + 1);
     int i = 0;
     while(i < size)
     {
@@ -254,7 +256,7 @@ int IsSolveable(State* state)
 
     for(int i=0; i < size * size - 1; i++)
     {   
-        if(temp[i] == 0) continue;
+        if(!temp[i]) continue;
 
         for(int j=i + 1; j < size * size; j++)
         {

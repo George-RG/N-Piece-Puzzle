@@ -328,8 +328,10 @@ int RB_InsertKey(RB tree, Pointer key)
     {
         ansestor = x;
         if(tree->Compare(node->data, x->data)==0)
+        {
+            free(node);
             return -1;
-
+        }
 
         if(tree->Compare(node->data, x->data)<0)
         {
@@ -448,7 +450,7 @@ NodePtr SearchTreeRec(RB tree,NodePtr node, Pointer key)
         return node;
     }
 
-    if (key < node->data)
+    if (tree->Compare(key, node->data) < 0)
     {
         return SearchTreeRec(tree, node->left, key);
     }

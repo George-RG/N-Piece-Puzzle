@@ -15,12 +15,12 @@ ARGS = 3
 CC = gcc
 
 #compiler options
-CFLAGS = -Wall -Werror -I$(INCLUDE) -I$(INCLUDE2)
+CFLAGS = -Wall -Werror -I$(INCLUDE) -I$(INCLUDE2) -std=c99
 LDFLAGS = -lm
 
-objects= game.o interface.o 8piece_puzzle.o List.o RB.o PQ.o $(LIB)/libraylib.a
+objects= game.o interface.o List.o RB.o PQ.o ai_solver.o $(LIB)/libraylib.a
 
-EXEC = game.exe
+EXEC = game
 
 ifeq ($(DEBUG),true)
 	CFLAGS += -g3 -O0
@@ -32,13 +32,13 @@ ifeq ($(MY_OS),win)
 	LDFLAGS += -lgdi32 -lwinmm -lopengl32
 	CC = x86_64-w64-mingw32-gcc
 else ifeq ($(MY_OS),linux)
-	LDFLAGS += -ldl -lpthread -lGL -ggdb
+	LDFLAGS += -ldl -lpthread -lGL
 endif
 
 $(EXEC):$(objects)
 	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-	mv $(EXEC) /mnt/c/Users/Georg/Desktop/
-	rm -f $(EXEC)
+#mv $(EXEC) /mnt/c/Users/Georg/Desktop/
+#rm -f $(EXEC)
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
@@ -57,6 +57,9 @@ PQ.o :
 game.o :
 	$(CC) -c game.c $(LDFLAGS) $(CFLAGS)
 
+ai_solver.o :
+	$(CC) -c ai_solver.c $(LDFLAGS) $(CFLAGS)
+
 interface.o :
 	$(CC) -c interface.c $(LDFLAGS) $(CFLAGS)
 
@@ -66,8 +69,8 @@ interface.o :
 #Cleaning
 PHONY clean:
 	rm -f $(objects) $(EXEC)
-	cd /mnt/c/Users/Georg/Desktop/ 
-	rm -f $(EXEC)
+#cd /mnt/c/Users/Georg/Desktop/ 
+#rm -f $(EXEC)
 
 valgrind: $(EXEC)
 	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)

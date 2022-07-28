@@ -172,7 +172,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				printf("BestDev = GeorgeRG\n");
 
-				gr_state->move_list = solve(cur_state,Queue,tree);
+				//gr_state->move_list = solve(cur_state,Queue,tree);
 
 				printf("Queue Size: %d\n",PQ_Size(Queue));
 				printf("Tree Size: %d\n",RB_Size(tree));
