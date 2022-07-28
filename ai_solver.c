@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
 
 #include "include/8piece_puzzle.h"
 
@@ -32,12 +33,17 @@ ListPtr solve_new(State* state)
 
     RB_InsertKey(Visited,state);
 
+    time_t t0 = time(0);
+
     while(min != 0)
     {    
         min = solver_helper(state, Bound, Visited, &final);
         Bound = min;
         printf("Current estimated min moves:%d\n",min);
     }
+
+    time_t t1 = time(0);
+    double datetime_diff_ms = difftime(t1, t0) * 1000 * 1000;
 
     ListPtr move_list = ReturnSolution(final);
 
@@ -65,6 +71,8 @@ ListPtr solve_new(State* state)
 
         destroyfunc(temp);
     }
+
+    printf("Time taken: %f\n",datetime_diff_ms);
 
     return move_list;
 }
