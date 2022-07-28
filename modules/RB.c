@@ -144,6 +144,9 @@ void rightRotate(RB tree, NodePtr x)
 // Deletion//
 int RB_RemoveKey(RB tree, Pointer key)
 {
+    if(key == NULL)
+        return -1;
+
     NodePtr node = tree->root;
 
     NodePtr NodeToDelete = NullNode;
@@ -308,6 +311,9 @@ void deleteFix(RB tree, NodePtr DeppestAffected)
 
 int RB_InsertKey(RB tree, Pointer key)
 {
+    if(key == NULL)
+        return -1;
+
     NodePtr node = malloc(sizeof(*node));
     node->parent = NULL;
     node->data = key;
@@ -451,6 +457,9 @@ NodePtr SearchTreeRec(RB tree,NodePtr node, Pointer key)
 
 NodePtr RB_Search(RB tree, Pointer key)
 {
+    if(key == NULL)
+        return NULL;
+
     return(SearchTreeRec(tree,tree->root,key));
 }
 
