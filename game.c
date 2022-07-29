@@ -106,7 +106,7 @@ int main (int argc , char* argv[])
 
     Graf = create_gra_state(N);
 
-    Graf->move_list = solve(initial_state,Queue,tree);
+    // Graf->move_list = solve(initial_state,Queue,tree);
 
     // while(auto_play>1 || auto_play < 0)
     // {

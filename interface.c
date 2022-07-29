@@ -14,6 +14,9 @@
 #define LLGRAY \
 	(Color) { 220, 220, 220, 255 } // Light Light Gray
 
+#define TRANSPARENT_BLACK \
+	(Color) { 0, 0, 0, 200 } // Transparent Black
+
 typedef enum play_mode
 {
 	NONE,
@@ -47,6 +50,7 @@ int size_count = 0;
 play_mode cur_mode = NONE;
 
 // Solver Globals
+bool solver_running = false;
 int auto_play = 2;
 
 void interface_init()
@@ -134,16 +138,16 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				}
 			}
 
-			// if (!IsSolveable(cur_state))
-			// {
-			// 	printf("Puzzle is not solvable\n");
-			// 	started = false;
-			// 	destroyfunc(cur_state);
-			// 	gr_state_ptr = create_dumy_state();
-			// 	letter_count = 0;
-			// 	puzzle_str[0] = '\0';
-			// 	return;
-			// }
+			if (!IsSolveable(cur_state))
+			{
+				printf("Puzzle is not solvable\n");
+				started = false;
+				destroyfunc(cur_state);
+				gr_state_ptr = create_dumy_state();
+				letter_count = 0;
+				puzzle_str[0] = '\0';
+				return;
+			}
 
 			if (isGoal(*cur_state) == 1)
 			{
@@ -165,16 +169,28 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 			if(cur_mode == AUTO)
 			{
-				//pthread_t thread_id;
+				gr_state->move_list = NULL;
 
-				gr_state->move_list = solve_new(cur_state);
+				thread_data* arg = malloc(sizeof(thread_data));
+				arg->input = cur_state;
+				arg->result = &gr_state->move_list;
+				arg->menu = in_menu;
+
+				pthread_t thread_id;
+
+				pthread_create(&thread_id, NULL, solve_new, arg);
+
+				solver_running = true;
+				started = false;
 			}
 
-			*in_menu = false;
+			if(cur_mode == MANUAL)
+			{
+				*in_menu = false;
+			}
 		}
 
 		int MAX_CHAR = -1;
-		// int spaces;
 
 		// Update the string
 		if (gr_state->board_size != -1)
@@ -189,7 +205,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				temp += 8;
 			}
 			MAX_CHAR--;
-			// spaces = MAX_CHAR;
 			MAX_CHAR += temp;
 		}
 
@@ -252,128 +267,136 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			free(max_string);
 		}
 
+		// Rectangle positions
 		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 300, min, 50};
 		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
 		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 650, 220, 80};
-
 		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
 		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 450, 200, 140};
+
+		// Text box triggers
 		bool mouseOnText = false;
 		bool mouseOnSize = false;
 
-		// Text Boxes Update
-
-		// Update the mouse position
-		if (CheckCollisionPointRec(GetMousePosition(), textBox))
-			mouseOnText = true;
-		else
-			mouseOnText = false;
-
-		if (CheckCollisionPointRec(GetMousePosition(), sizeBox))
-			mouseOnSize = true;
-		else
-			mouseOnSize = false;
-
-		if (mouseOnText)
-		{
-			// Set the window's cursor to the I-Beam
-			SetMouseCursor(MOUSE_CURSOR_IBEAM);
-
-			// Update the puzzle string
-			int key = GetCharPressed();
-
-			// Check if more characters have been pressed on the same frame
-			while (key > 0)
-			{
-				// NOTE: Only allow keys in range [48..57] (0..9)
-				if ((((key >= '0') && (key <= '9')) || (key == ' ')) && (letter_count < MAX_CHAR))
-				{
-					puzzle_str[letter_count] = (char)key;
-					puzzle_str[letter_count + 1] = '\0'; // Add null terminator at the end of the string.
-					letter_count++;
-				}
-
-				key = GetCharPressed(); // Check next character in the queue
-			}
-
-			if (IsKeyPressed(KEY_BACKSPACE))
-			{
-				letter_count--;
-				if (letter_count < 0)
-					letter_count = 0;
-				puzzle_str[letter_count] = '\0';
-			}
-		}
-		else if (mouseOnSize)
-		{
-			// Set the window's cursor to the I-Beam
-			SetMouseCursor(MOUSE_CURSOR_IBEAM);
-
-			// Update the puzzle string
-			int key = GetCharPressed();
-
-			// Check if more characters have been pressed on the same frame
-			while (key > 0)
-			{
-				// NOTE: Only allow keys in range [48..57] (0..9)
-				if ((key >= 48) && (key <= 57) && (size_count < 2))
-				{
-					size_str[size_count] = (char)key;
-					size_str[size_count + 1] = '\0'; // Add null terminator at the end of the string.
-					size_count++;
-				}
-
-				key = GetCharPressed(); // Check next character in the queue
-			}
-
-			if (IsKeyPressed(KEY_BACKSPACE))
-			{
-				size_count--;
-				if (size_count < 0)
-					size_count = 0;
-				size_str[size_count] = '\0';
-			}
-
-			if (size_str[0] != '\0')
-				gr_state->board_size = atoi(size_str);
-			else
-				gr_state->board_size = 0;
-		}
-		else
-			SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-
-		if (mouseOnText)
-			framesCounter++;
-		else
-			framesCounter = 0;
-
-		if (mouseOnSize)
-			framsCounterSize++;
-		else
-			framsCounterSize = 0;
-
-		// Button Updates
+		// Button triggers
 		bool mouseOnAuto = false;
 		bool mouseOnMan = false;
 
-		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), autoBox))
-			cur_mode = AUTO;
-		else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), manBox))
-			cur_mode = MANUAL;
-
-		if (CheckCollisionPointRec(GetMousePosition(), autoBox))
-			mouseOnAuto = true;
-		else
-			mouseOnAuto = false;
-
-		if (CheckCollisionPointRec(GetMousePosition(), manBox))
-			mouseOnMan = true;
-		else
-			mouseOnMan = false;
-
-		if ((CheckCollisionPointRec(GetMousePosition(), enterBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
+		//
+		if(solver_running == false)
 		{
-			started = true;
+			// Text Boxes Update
+
+			// Update the mouse position
+			if (CheckCollisionPointRec(GetMousePosition(), textBox))
+				mouseOnText = true;
+			else
+				mouseOnText = false;
+
+			if (CheckCollisionPointRec(GetMousePosition(), sizeBox))
+				mouseOnSize = true;
+			else
+				mouseOnSize = false;
+
+			if (mouseOnText)
+			{
+				// Set the window's cursor to the I-Beam
+				SetMouseCursor(MOUSE_CURSOR_IBEAM);
+
+				// Update the puzzle string
+				int key = GetCharPressed();
+
+				// Check if more characters have been pressed on the same frame
+				while (key > 0)
+				{
+					// NOTE: Only allow keys in range [48..57] (0..9)
+					if ((((key >= '0') && (key <= '9')) || (key == ' ')) && (letter_count < MAX_CHAR))
+					{
+						puzzle_str[letter_count] = (char)key;
+						puzzle_str[letter_count + 1] = '\0'; // Add null terminator at the end of the string.
+						letter_count++;
+					}
+
+					key = GetCharPressed(); // Check next character in the queue
+				}
+
+				if (IsKeyPressed(KEY_BACKSPACE))
+				{
+					letter_count--;
+					if (letter_count < 0)
+						letter_count = 0;
+					puzzle_str[letter_count] = '\0';
+				}
+			}
+			else if (mouseOnSize)
+			{
+				// Set the window's cursor to the I-Beam
+				SetMouseCursor(MOUSE_CURSOR_IBEAM);
+
+				// Update the puzzle string
+				int key = GetCharPressed();
+
+				// Check if more characters have been pressed on the same frame
+				while (key > 0)
+				{
+					// NOTE: Only allow keys in range [48..57] (0..9)
+					if ((key >= 48) && (key <= 57) && (size_count < 2))
+					{
+						size_str[size_count] = (char)key;
+						size_str[size_count + 1] = '\0'; // Add null terminator at the end of the string.
+						size_count++;
+					}
+
+					key = GetCharPressed(); // Check next character in the queue
+				}
+
+				if (IsKeyPressed(KEY_BACKSPACE))
+				{
+					size_count--;
+					if (size_count < 0)
+						size_count = 0;
+					size_str[size_count] = '\0';
+				}
+
+				if (size_str[0] != '\0')
+					gr_state->board_size = atoi(size_str);
+				else
+					gr_state->board_size = 0;
+			}
+			else
+				SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+			if (mouseOnText)
+				framesCounter++;
+			else
+				framesCounter = 0;
+
+			if (mouseOnSize)
+				framsCounterSize++;
+			else
+				framsCounterSize = 0;
+
+			// Button Updates
+
+			if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), autoBox))
+				cur_mode = AUTO;
+			else if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(GetMousePosition(), manBox))
+				cur_mode = MANUAL;
+
+			if (CheckCollisionPointRec(GetMousePosition(), autoBox))
+				mouseOnAuto = true;
+			else
+				mouseOnAuto = false;
+
+			if (CheckCollisionPointRec(GetMousePosition(), manBox))
+				mouseOnMan = true;
+			else
+				mouseOnMan = false;
+
+			if ((CheckCollisionPointRec(GetMousePosition(), enterBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
+			{
+				started = true;
+			}
 		}
 
 		// Draw the text box
@@ -517,6 +540,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 		DrawText("START", (int)enterBox.x + ((int)enterBox.width) / 2 - MeasureText("START", 40) / 2, (int)enterBox.y + ((int)enterBox.height) / 2 - 20, 40, RAYWHITE);
 
 		DrawText("Press ENTER to start", SCREEN_WIDTH / 2 - MeasureText("Press ENTER to start", 20) / 2, (int)enterBox.y + (int)enterBox.height + 10, 20, DARKGRAY);
+
+		if(solver_running)
+		{
+			Rectangle rec = (Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()};
+			DrawRectangleRec(rec, TRANSPARENT_BLACK);
+
+			DrawText("Solving...", SCREEN_WIDTH / 2 - MeasureText("Solving...", 30) / 2, SCREEN_HEIGHT / 2 - 30, 30, RAYWHITE);
+		}
 
 		EndDrawing();
 	}

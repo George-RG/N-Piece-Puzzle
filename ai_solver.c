@@ -4,8 +4,9 @@
 #include <string.h>
 #include <limits.h>
 #include <time.h>
+#include <pthread.h>
 
-#include "include/8piece_puzzle.h"
+#include "ai_solver.h"
 
 void evaluate(State *state);
 State* CopyState(State* cur_state);
@@ -13,8 +14,10 @@ ListPtr ReturnSolution(State* state);
 char* IntToAscii(int number);
 int solver_helper(State* cur_state,int Bound,RB Visited, State** final);
 
-ListPtr solve_new(State* state)
+void* solve_new(void* arg)
 {
+    State* state = ((thread_data*)arg)->input;
+
     evaluate(state);
     
     int Bound = state->eval;
@@ -51,7 +54,10 @@ ListPtr solve_new(State* state)
 
     printf("Time taken: %f\n",datetime_diff_s);
 
-    return move_list;
+    *(((thread_data*)arg)->result) = move_list;
+    *(((thread_data*)arg)->menu) = false;
+
+    return NULL;
 }
 
 // IDA* algorithm

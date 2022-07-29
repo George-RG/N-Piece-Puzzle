@@ -1,6 +1,7 @@
 #include "PQ.h"
 #include "List.h"
 #include "RB.h"
+#include "raylib.h"
 
 typedef enum {
     UP,
@@ -26,9 +27,14 @@ typedef struct _state{
 
 typedef State* PQItem;
 
+typedef struct thread_data{
+    ListPtr* result;
+    State* input;
+    bool* menu;
+} thread_data;
+
 //ListPtr solve(State* state, PQ Queue, ListPtr Visited);
-ListPtr solve(State* state, PQ Queue, RB tree);
-ListPtr solve_new(State* state);
+void* solve_new(void* arg);
 int isGoal(State state);
 int compare(Pointer a, Pointer b);
 int compare_evals(Pointer first,Pointer second);

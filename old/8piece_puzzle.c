@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "include/8piece_puzzle.h"
+#include "../include/ai_sovelr.h"
 
 //void expand(State* cur_state, PQ Queue, ListPtr Visited);
 void expand(State* cur_state, PQ Queue,RB tree);

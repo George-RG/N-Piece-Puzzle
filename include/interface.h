@@ -1,4 +1,4 @@
-#include "8piece_puzzle.h"
+#include "ai_solver.h"
 #include "graphics_state.h"
 
 #include "graphics_state.h"
