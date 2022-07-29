@@ -133,6 +133,9 @@ State *CopyState(State *cur_state)
         for (int j = 0; j < new_state->size; j++)
             new_state->board[i][j] = cur_state->board[i][j];
 
+    new_state->blank_row = cur_state->blank_row;
+    new_state->blank_col = cur_state->blank_col;
+
     return new_state;
 }
 

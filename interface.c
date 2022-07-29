@@ -534,14 +534,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (prev->board[i][j] != 0)
 					{
-						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 						// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 						char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 						DrawText(
 							buf,
 							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
 							gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
-							(int)(gr_state->edge / 2), BLACK);
+							(int)(gr_state->edge / 2), CYAN);
 						free(buf);
 					}
 
@@ -596,14 +596,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					for (int j = 0; j < gr_state->board_size; j++)
 						if (prev->board[i][j] != 0)
 						{
-							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
 								gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
-								(int)(gr_state->edge / 2), BLACK);
+								(int)(gr_state->edge / 2), CYAN);
 							free(buf);
 						}
 			}
@@ -618,14 +618,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					for (int j = 0; j < gr_state->board_size; j++)
 						if (((State*)ListGetNth(gr_state->move_list, 1))->board[i][j] != 0)
 						{
-							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
 								gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
-								(int)(gr_state->edge / 2), BLACK);
+								(int)(gr_state->edge / 2), CYAN);
 							free(buf);
 						}
 
@@ -670,14 +670,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (drawn_state->board[i][j] != 0)
 					{
-						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, WHITE);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 						// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 						char *buf = int_to_ascii(drawn_state->board[i][j]);
 						DrawText(
 							buf,
 							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
 							gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
-							(int)(gr_state->edge / 2), BLACK);
+							(int)(gr_state->edge / 2), CYAN);
 						free(buf);
 					}
 		}
