@@ -87,6 +87,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			cur_state->board = malloc(sizeof(int *) * N);
 			for (int i = 0; i < N; i++)
 				cur_state->board[i] = malloc(sizeof(int) * N);
+			cur_state->representation = NULL;
 			cur_state->moves = 0;
 			cur_state->parent = NULL;
 			cur_state->size = N;
@@ -133,16 +134,16 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				}
 			}
 
-			if (!IsSolveable(cur_state))
-			{
-				printf("Puzzle is not solvable\n");
-				started = false;
-				destroyfunc(cur_state);
-				gr_state_ptr = create_dumy_state();
-				letter_count = 0;
-				puzzle_str[0] = '\0';
-				return;
-			}
+			// if (!IsSolveable(cur_state))
+			// {
+			// 	printf("Puzzle is not solvable\n");
+			// 	started = false;
+			// 	destroyfunc(cur_state);
+			// 	gr_state_ptr = create_dumy_state();
+			// 	letter_count = 0;
+			// 	puzzle_str[0] = '\0';
+			// 	return;
+			// }
 
 			if (isGoal(*cur_state) == 1)
 			{
