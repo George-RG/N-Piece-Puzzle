@@ -43,13 +43,13 @@ ListPtr solve_new(State* state)
     }
 
     time_t t1 = time(0);
-    double datetime_diff_ms = difftime(t1, t0) * 1000 * 1000;
+    double datetime_diff_s = difftime(t1, t0);
 
     ListPtr move_list = ReturnSolution(final);
 
     RB_Destroy(Visited);
 
-    printf("Time taken: %f\n",datetime_diff_ms);
+    printf("Time taken: %f\n",datetime_diff_s);
 
     return move_list;
 }
