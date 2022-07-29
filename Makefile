@@ -20,7 +20,7 @@ LDFLAGS = -lm
 
 objects= game.o interface.o List.o RB.o PQ.o ai_solver.o $(LIB)/libraylib.a
 
-EXEC = game
+EXEC = game.exe
 
 ifeq ($(DEBUG),true)
 	CFLAGS += -g3 -O0
@@ -37,8 +37,8 @@ endif
 
 $(EXEC):$(objects)
 	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-#mv $(EXEC) /mnt/c/Users/Georg/Desktop/
-#rm -f $(EXEC)
+	mv $(EXEC) /mnt/c/Users/Georg/Desktop/
+	rm -f $(EXEC)
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
@@ -69,8 +69,8 @@ interface.o :
 #Cleaning
 PHONY clean:
 	rm -f $(objects) $(EXEC)
-#cd /mnt/c/Users/Georg/Desktop/ 
-#rm -f $(EXEC)
+	cd /mnt/c/Users/Georg/Desktop/ 
+	rm -f $(EXEC)
 
 valgrind: $(EXEC)
 	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)

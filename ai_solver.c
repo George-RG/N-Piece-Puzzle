@@ -49,29 +49,6 @@ ListPtr solve_new(State* state)
 
     RB_Destroy(Visited);
 
-    int counter = 1;
-
-    while(ListEmpty(move_list) == 0)
-    {
-        State* temp = ListGetNth(move_list,1);
-        ListRemove_nth(move_list,1);
-
-        printf("MOVE: %d\n",counter++);
-
-        for(int i=0; i<temp->size; i++)
-        {
-            for(int j=0; j<temp->size; j++)
-            {
-                printf("%d ",temp->board[i][j]);
-            }
-            printf("\n");
-        }
-
-        printf("\n");
-
-        destroyfunc(temp);
-    }
-
     printf("Time taken: %f\n",datetime_diff_ms);
 
     return move_list;

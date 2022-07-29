@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <pthread.h>
 
 #define CYAN \
 	(Color) { 0, 145, 143, 255 } // Cyan
@@ -68,7 +69,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 	{
 		if (started == true && gr_state->move_list == NULL)
 		{
-			if (atoi(size_str) < 2 || atoi(size_str) > 4)
+			if (atoi(size_str) < 2 || atoi(size_str) > 5)
 			{
 				printf("Invalid size.\n");
 				started = false;
@@ -163,20 +164,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 			if(cur_mode == AUTO)
 			{
-				RB tree = RB_Initialize(destroyfunc,compare);
-    			PQ Queue = PQ_Initialize(compare_evals,destroyfunc);
+				//pthread_t thread_id;
 
-				evaluate(cur_state);
-
-				RB_InsertKey(tree,cur_state);
-
-				printf("BestDev = GeorgeRG\n");
-
-				//gr_state->move_list = solve(cur_state,Queue,tree);
-
-				printf("Queue Size: %d\n",PQ_Size(Queue));
-				printf("Tree Size: %d\n",RB_Size(tree));
-				printf("Total: %d\n",RB_Size(tree)+ PQ_Size(Queue));
+				gr_state->move_list = solve_new(cur_state);
 			}
 
 			*in_menu = false;
@@ -644,7 +634,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				if (blank_next.x == blank_prev.x && blank_next.y == blank_prev.y)
 				{
-					ListRemove_nth(gr_state->move_list, 1);
+					destroyfunc(ListRemove_nth(gr_state->move_list, 1));
 					gr_state->trans.in_transition = false;
 					off_row = gr_state->trans.offset_row * gr_state->edge;
 					off_col = gr_state->trans.offset_col * gr_state->edge;
