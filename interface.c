@@ -571,7 +571,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					if (prev->board[i][j] != 0)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-						// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 						char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 						DrawText(
 							buf,
@@ -635,7 +634,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 						if (prev->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
@@ -657,7 +655,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 						if (((State*)ListGetNth(gr_state->move_list, 1))->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-							// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
