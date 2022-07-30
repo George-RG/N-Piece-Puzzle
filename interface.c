@@ -180,6 +180,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				pthread_create(&thread_id, NULL, solve_new, arg);
 
+				//solve_new(arg);
+
+				free(arg);
+
 				solver_running = true;
 				started = false;
 			}
@@ -268,11 +272,11 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 		}
 
 		// Rectangle positions
-		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 300, min, 50};
-		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
-		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 650, 220, 80};
-		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
-		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 450, 200, 140};
+		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 370, min, 50};
+		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 240, 50, 50};
+		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 700, 220, 80};
+		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 500, 200, 140};
+		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 500, 200, 140};
 
 		// Text box triggers
 		bool mouseOnText = false;
@@ -451,16 +455,16 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			MAX_CHAR = 0;
 
 		if (letter_count != MAX_CHAR)
-			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, 360, 20, DARKGRAY);
+			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, textBox.y + textBox.height + 10, 20, DARKGRAY);
 		else
-			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, 360, 20, MAROON);
+			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, textBox.y + textBox.height + 10, 20, MAROON);
 		// TODO
 		// DrawText(TextFormat("PRESS ENTER TO START"), 315, 275, 20, DARKGRAY);
 		// DrawText(TextFormat("PRESS ESC TO EXIT"), 315, 300, 20, DARKGRAY);
 		// DrawText(TextFormat("PRESS A TO TOGGLE AUTOSOVLE"), 315, 325, 20, DARKGRAY);
 		DrawText(TextFormat("N-Piece Puzzle"), SCREEN_WIDTH / 2 - MeasureText("N-Piece Puzzle", 70) / 2, 25, 70, CYAN);
-		DrawText(TextFormat("Puzzle Size"), SCREEN_WIDTH / 2 - (MeasureText("Puzzle Size", 30) + 50 + 10) / 2, 200, 30, DARKGRAY);
-		DrawText(TextFormat("Current Puzzle"), SCREEN_WIDTH / 2 - MeasureText("Current Puzzle", 30) / 2, 260, 30, DARKGRAY);
+		DrawText(TextFormat("Puzzle Size"), SCREEN_WIDTH / 2 - (MeasureText("Puzzle Size", 30) + 50 + 10) / 2, sizeBox.y + 15, 30, DARKGRAY);
+		DrawText(TextFormat("Current Puzzle"), SCREEN_WIDTH / 2 - MeasureText("Current Puzzle", 30) / 2, textBox.y - 30, 30, DARKGRAY);
 		DrawText(TextFormat("Made by GeorgeRG"), SCREEN_WIDTH / 2 - MeasureText("Made by GeorgeRG", 25) / 2, SCREEN_HEIGHT - 35, 25, CYAN);
 
 		if (mouseOnText)
@@ -612,6 +616,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					GetScreenWidth() - MeasureText("PRESS [A] TO ENABLE AUTO-PLAY", 20) - 20,
 					20, 20, BLUE);
 			}
+
+			//DrawRectangle(0,PUZZLE_HEIGHT,GetScreenWidth(),GetScreenHeight()-PUZZLE_HEIGHT,LLGRAY);
 		}
 		else
 		{
@@ -674,14 +680,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					gr_state->positions[next->blank_row][next->blank_col].y -= off_row;
 				}
 			}
-
-			// if (autoplay)
-			// {
-			// 	DrawText(
-			// 		"PRESS [A] TO DISABLE AUTO-PLAY",
-			// 		GetScreenWidth() - MeasureText("PRESS [A] TO DISABLE AUTO-PLAY", 20) - 20,
-			// 		20, 20, BLUE);
-			// }
 		}
 
 		EndDrawing();
@@ -774,7 +772,7 @@ Graphics create_gra_state(int size)
 	gr->trans.in_transition = false;
 
 	// Figuring out where the blocks are going to be
-	gr->edge = (float)SCREEN_HEIGHT / (float)size;
+	gr->edge = (float)PUZZLE_HEIGHT / (float)size;
 
 	gr->positions = malloc(sizeof(point *) * size);
 	for (int i = 0; i < size; i++)

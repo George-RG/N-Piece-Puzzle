@@ -23,9 +23,9 @@ objects= game.o interface.o List.o RB.o PQ.o ai_solver.o $(LIB)/libraylib.a
 EXEC = game.exe
 
 ifeq ($(DEBUG),true)
-	CFLAGS += -g3 -O3
+	CFLAGS += -g3 -O0
 else
-	CFLAGS += -O0
+	CFLAGS += -O3
 endif
 
 ifeq ($(MY_OS),win)
