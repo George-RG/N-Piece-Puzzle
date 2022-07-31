@@ -30,7 +30,7 @@ typedef State* PQItem;
 typedef struct thread_data{
     ListPtr* result;
     State* input;
-    bool* menu;
+    //bool* menu;
 } thread_data;
 
 //ListPtr solve(State* state, PQ Queue, ListPtr Visited);

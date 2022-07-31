@@ -31,6 +31,9 @@ For the graphics the program uses a library called [Raylib](https://www.raylib.c
 
 > Thanks to [Mitsos](https://github.com/Jimminer) the program can now be compiled for windows and linux through wsl. All you have to do to compile for windows is add `MY_OS=win` to the make command. 
 
+> Compilation for windows for WSL may require the gcc mingw package. For Ubuntu you can downloadit using apt by typing: `sudo apt-get install gcc-mingw-w64` 
+
+
 - Run the program
     1. Type `./game "Edge"` where the edge is the edge of the board.
     2. Type row by row the numbers of the tiles in the starting board. 

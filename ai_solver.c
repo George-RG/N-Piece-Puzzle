@@ -16,7 +16,9 @@ int solver_helper(State* cur_state,int Bound,RB Visited, State** final);
 
 void* solve_new(void* arg)
 {
-    State* state = ((thread_data*)arg)->input;
+    thread_data* test = (thread_data*)arg;
+
+    State* state = test->input;
 
     evaluate(state);
     
@@ -54,8 +56,10 @@ void* solve_new(void* arg)
 
     printf("Time taken: %f\n",datetime_diff_s);
 
-    *(((thread_data*)arg)->result) = move_list;
-    *(((thread_data*)arg)->menu) = false;
+    *(test->result) = move_list;
+    //*(test->menu) = false;
+
+    free(arg);
 
     return NULL;
 }
@@ -130,6 +134,7 @@ State *CopyState(State *cur_state)
     new_state->parent = cur_state;
     new_state->moves = cur_state->moves + 1;
     new_state->size = cur_state->size;
+    new_state->representation = NULL;
 
     new_state->board = malloc(sizeof(int *) * new_state->size);
     for (int i = 0; i < new_state->size; i++)

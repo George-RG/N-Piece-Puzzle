@@ -5,7 +5,7 @@
 
 #include "raylib.h"
 
-#define SCREEN_HEIGHT 1100
+#define SCREEN_HEIGHT 1000
 #define PUZZLE_HEIGHT 900
 #define SCREEN_WIDTH  900
 

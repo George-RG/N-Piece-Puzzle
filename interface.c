@@ -173,8 +173,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				thread_data* arg = malloc(sizeof(thread_data));
 				arg->input = cur_state;
-				arg->result = &gr_state->move_list;
-				arg->menu = in_menu;
+				ListPtr* temp = &gr_state->move_list;
+				arg->result = temp;
+				//arg->menu = in_menu;
 
 				pthread_t thread_id;
 
@@ -182,7 +183,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				//solve_new(arg);
 
-				free(arg);
+				//free(arg);
 
 				solver_running = true;
 				started = false;
@@ -551,6 +552,12 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			DrawRectangleRec(rec, TRANSPARENT_BLACK);
 
 			DrawText("Solving...", SCREEN_WIDTH / 2 - MeasureText("Solving...", 30) / 2, SCREEN_HEIGHT / 2 - 30, 30, RAYWHITE);
+		
+			if(gr_state->move_list != NULL)
+			{
+				solver_running = false;
+				*in_menu = false;
+			}
 		}
 
 		EndDrawing();
@@ -615,8 +622,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					GetScreenWidth() - MeasureText("PRESS [A] TO ENABLE AUTO-PLAY", 20) - 20,
 					20, 20, BLUE);
 			}
-
-			//DrawRectangle(0,PUZZLE_HEIGHT,GetScreenWidth(),GetScreenHeight()-PUZZLE_HEIGHT,LLGRAY);
 		}
 		else
 		{
@@ -678,6 +683,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				}
 			}
 		}
+
+		DrawRectangle(0,PUZZLE_HEIGHT,SCREEN_WIDTH,SCREEN_HEIGHT-PUZZLE_HEIGHT,LLGRAY);
 
 		EndDrawing();
 	}
