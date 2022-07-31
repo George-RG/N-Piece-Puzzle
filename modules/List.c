@@ -32,6 +32,11 @@ int ListEmpty(ListPtr ls)
     return(ls->count == 0);
 }
 
+int ListSize(ListPtr ls)
+{
+    return ls->count;
+}
+
 void ListInsert(Pointer Item, ListPtr ls)
 {
     ls->count++;

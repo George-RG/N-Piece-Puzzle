@@ -11,3 +11,4 @@ Pointer ListRemove_nth(ListPtr ls, int N);
 int ListFind(ListPtr ls, Pointer value);
 void freeList(ListPtr ls);
 Pointer ListGetNth(ListPtr ls, int N);
+int ListSize(ListPtr ls);

@@ -30,7 +30,6 @@ typedef State* PQItem;
 typedef struct thread_data{
     ListPtr* result;
     State* input;
-    //bool* menu;
 } thread_data;
 
 //ListPtr solve(State* state, PQ Queue, ListPtr Visited);
@@ -41,5 +40,6 @@ int compare_evals(Pointer first,Pointer second);
 void destroyfunc(Pointer ptr);
 void evaluate (State* state);
 int IsSolveable(State* state);
+State* CopyState(State* cur_state);
 
 

@@ -5,9 +5,12 @@
 
 #include "raylib.h"
 
-#define SCREEN_HEIGHT 1000
+#define SCREEN_HEIGHT 900
 #define PUZZLE_HEIGHT 900
-#define SCREEN_WIDTH  900
+#define SCREEN_WIDTH  1300
+#define PUZZLE_WIDTH 900
+
+#define ANIMATION_SPEED 20 // (Edge/ANIMATION_SPEED)
 
 // Αρχικοποιεί το interface του παιχνιδιού
 void interface_init();

@@ -1,7 +1,5 @@
 #ifndef G_STATE_H
 #define G_STATE_H
-
-#define ANIMATION_SPEED 20 // (Edge/ANIMATION_SPEED)
 typedef struct _point
 {
     float x;

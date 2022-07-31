@@ -28,7 +28,6 @@ char *int_to_ascii(int num);
 char *remove_spaces(char *str);
 
 // Interface Globals
-Texture *textures;
 bool first_time = true;
 bool first_end = true;
 Sound clap;
@@ -53,13 +52,18 @@ play_mode cur_mode = NONE;
 bool solver_running = false;
 int auto_play = 2;
 
+// Auto Globals
+int moves = 0;
+int total_moves = 0;
+
+// Manual Globals
+State* manual_next_state = NULL;
+
 void interface_init()
 {
 	// Αρχικοποίηση του παραθύρου
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Puzzle");
 	SetTargetFPS(60);
-
-	textures = malloc(sizeof(Texture) * 8);
 
 	InitAudioDevice();
 	clap = LoadSound("assets/clap.wav");
@@ -129,6 +133,11 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				}
 
 				cur_state->board[row][col] = cur;
+				if(cur == 0)
+				{
+					cur_state->blank_row = row;
+					cur_state->blank_col = col;
+				}
 
 				col++;
 				if (col == N)
@@ -158,7 +167,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				return;
 			}
 
-			if(cur_mode == NONE)
+			if (cur_mode == NONE)
 			{
 				printf("No mode selected\n");
 				started = false;
@@ -167,31 +176,32 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				return;
 			}
 
-			if(cur_mode == AUTO)
+			if (cur_mode == AUTO)
 			{
 				gr_state->move_list = NULL;
 
-				thread_data* arg = malloc(sizeof(thread_data));
+				thread_data *arg = malloc(sizeof(thread_data));
 				arg->input = cur_state;
-				ListPtr* temp = &gr_state->move_list;
+				ListPtr *temp = &gr_state->move_list;
 				arg->result = temp;
-				//arg->menu = in_menu;
+				// arg->menu = in_menu;
 
 				pthread_t thread_id;
 
 				pthread_create(&thread_id, NULL, solve_new, arg);
 
-				//solve_new(arg);
+				// solve_new(arg);
 
-				//free(arg);
+				// free(arg);
 
 				solver_running = true;
 				started = false;
 			}
 
-			if(cur_mode == MANUAL)
+			if (cur_mode == MANUAL)
 			{
 				*in_menu = false;
+				moves = 0;
 			}
 		}
 
@@ -215,8 +225,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 		if (MAX_CHAR != OLD_MAX && MAX_CHAR > 1)
 		{
-			OLD_MAX = MAX_CHAR;
-
 			if (puzzle_str != NULL)
 				free(puzzle_str);
 
@@ -224,6 +232,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			puzzle_str[0] = '\0';
 			letter_count = 0;
 		}
+
+		if (MAX_CHAR != OLD_MAX)
+			OLD_MAX = MAX_CHAR;
 
 		int min = 300;
 
@@ -273,11 +284,12 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 		}
 
 		// Rectangle positions
-		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 370, min, 50};
-		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 240, 50, 50};
-		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 700, 220, 80};
-		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 500, 200, 140};
-		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 500, 200, 140};
+		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 300, min, 50};
+		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
+		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 650, 220, 80};
+		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
+		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 450, 200, 140};
+		Rectangle exitBox = (Rectangle){SCREEN_WIDTH - 30 - 170, SCREEN_HEIGHT - 30 - 50, 170, 60};
 
 		// Text box triggers
 		bool mouseOnText = false;
@@ -286,9 +298,11 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 		// Button triggers
 		bool mouseOnAuto = false;
 		bool mouseOnMan = false;
+		bool mouseOnExit = false;
+		bool mouseOnStart = false;
 
 		//
-		if(solver_running == false)
+		if (solver_running == false)
 		{
 			// Text Boxes Update
 
@@ -303,7 +317,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			else
 				mouseOnSize = false;
 
-			if (mouseOnText)
+			if (mouseOnText && puzzle_str != NULL)
 			{
 				// Set the window's cursor to the I-Beam
 				SetMouseCursor(MOUSE_CURSOR_IBEAM);
@@ -366,7 +380,15 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				if (size_str[0] != '\0')
 					gr_state->board_size = atoi(size_str);
 				else
+				{
 					gr_state->board_size = 0;
+					if (puzzle_str != NULL)
+					{
+						free(puzzle_str);
+						puzzle_str = NULL;
+						letter_count = 0;
+					}
+				}
 			}
 			else
 				SetMouseCursor(MOUSE_CURSOR_DEFAULT);
@@ -398,9 +420,35 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			else
 				mouseOnMan = false;
 
+			if (CheckCollisionPointRec(GetMousePosition(), enterBox))
+				mouseOnStart = true;
+			else
+				mouseOnStart = false;
+
+			if (CheckCollisionPointRec(GetMousePosition(), exitBox))
+				mouseOnExit = true;
+			else
+				mouseOnExit = false;
+
 			if ((CheckCollisionPointRec(GetMousePosition(), enterBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
 			{
 				started = true;
+			}
+
+			if ((CheckCollisionPointRec(GetMousePosition(), exitBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
+			{
+				// Exit the game
+				if(puzzle_str != NULL)
+					free(puzzle_str);
+
+				// Unload all loaded data (textures, sounds, models...)
+				UnloadSound(clap);
+				
+				CloseAudioDevice();
+
+				CloseWindow();
+
+				exit(0);
 			}
 		}
 
@@ -413,7 +461,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 		int guard = -10;
 
-		if(letter_count < MAX_CHAR)
+		if (letter_count < MAX_CHAR)
 			guard -= MeasureText("_", 35);
 
 		while (MeasureText(shown_str, 35) > textBox.width + guard)
@@ -534,9 +582,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			DrawRectangleLines((int)manBox.x, (int)manBox.y, (int)manBox.width, (int)manBox.height, DARKGRAY);
 		}
 
-		DrawFPS(10, 10);
-
-		if (CheckCollisionPointRec(GetMousePosition(), enterBox))
+		if (mouseOnStart)
 			DrawRectangleRec(enterBox, LIGHTCYAN);
 		else
 			DrawRectangleRec(enterBox, CYAN);
@@ -546,30 +592,62 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 		DrawText("Press ENTER to start", SCREEN_WIDTH / 2 - MeasureText("Press ENTER to start", 20) / 2, (int)enterBox.y + (int)enterBox.height + 10, 20, DARKGRAY);
 
-		if(solver_running)
+		if(mouseOnExit)
+			DrawRectangleRec(exitBox, DARKGRAY);
+		else
+			DrawRectangleRec(exitBox, GRAY);
+
+		DrawRectangleLines((int)exitBox.x, (int)exitBox.y, (int)exitBox.width, (int)exitBox.height, DARKGRAY);
+		DrawText("EXIT", (int)exitBox.x + ((int)exitBox.width) / 2 - MeasureText("EXIT", 40) / 2, (int)exitBox.y + ((int)exitBox.height) / 2 - 20, 40, RAYWHITE);
+
+
+		if (solver_running)
 		{
 			Rectangle rec = (Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()};
 			DrawRectangleRec(rec, TRANSPARENT_BLACK);
 
 			DrawText("Solving...", SCREEN_WIDTH / 2 - MeasureText("Solving...", 30) / 2, SCREEN_HEIGHT / 2 - 30, 30, RAYWHITE);
-		
-			if(gr_state->move_list != NULL)
+
+			if (gr_state->move_list != NULL)
 			{
 				solver_running = false;
 				*in_menu = false;
+				moves = 0;
+				total_moves = ListSize(gr_state->move_list);
 			}
 		}
 
 		EndDrawing();
 	}
-	else if(cur_mode == AUTO)
+	else if (cur_mode == AUTO)
 	{
+		Rectangle back_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (170 / 2), SCREEN_HEIGHT - 30 - 50, 170, 60};
+
+		// Update 
+		// Update moves progress bar
+		int MAX_BAR_WIDTH = 300;
+		Rectangle max_bar = (Rectangle){(GetScreenWidth() - PUZZLE_WIDTH) / 2 - MAX_BAR_WIDTH / 2, 100, MAX_BAR_WIDTH, 20};
+		float progress = (float)moves / ((float)total_moves - 1.0);
+		int bar_width = (int)(progress * MAX_BAR_WIDTH);
+		if (bar_width > MAX_BAR_WIDTH - 4)
+			bar_width = MAX_BAR_WIDTH - 4;
+
+		// Update buttons
+		bool mouseOnBack = CheckCollisionPointRec(GetMousePosition(), back_button);
+
+		if ((CheckCollisionPointRec(GetMousePosition(), back_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
+		{
+			//TODO
+		}
+
+		// Get Move
 		State *prev = ListGetNth(gr_state->move_list, 1);
 
+		//Start Drawing
 		BeginDrawing();
 
 		// Καθαρισμός, θα τα σχεδιάσουμε όλα από την αρχή
-		ClearBackground(CYAN);
+		ClearBackground(DARKGRAY);
 
 		if ((play == false && gr_state->trans.in_transition == false) || isGoal(*prev) || first_time == true)
 		{
@@ -578,7 +656,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					if (prev->board[i][j] != 0)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-						char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
+						char *buf = int_to_ascii(((State *)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 						DrawText(
 							buf,
 							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -639,7 +717,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 						if (prev->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
+							char *buf = int_to_ascii(((State *)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -657,10 +735,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				for (int i = 0; i < gr_state->board_size; i++)
 					for (int j = 0; j < gr_state->board_size; j++)
-						if (((State*)ListGetNth(gr_state->move_list, 1))->board[i][j] != 0)
+						if (((State *)ListGetNth(gr_state->move_list, 1))->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-							char *buf = int_to_ascii(((State*)ListGetNth(gr_state->move_list, 1))->board[i][j]);
+							char *buf = int_to_ascii(((State *)ListGetNth(gr_state->move_list, 1))->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -674,6 +752,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				if (blank_next.x == blank_prev.x && blank_next.y == blank_prev.y)
 				{
+					moves++;
 					destroyfunc(ListRemove_nth(gr_state->move_list, 1));
 					gr_state->trans.in_transition = false;
 					off_row = gr_state->trans.offset_row * gr_state->edge;
@@ -684,28 +763,86 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			}
 		}
 
-		DrawRectangle(0,PUZZLE_HEIGHT,SCREEN_WIDTH,SCREEN_HEIGHT-PUZZLE_HEIGHT,LLGRAY);
+		// Draw the side panel
+		Rectangle side_panel = {0, 0, SCREEN_WIDTH - PUZZLE_WIDTH, SCREEN_HEIGHT};
+		DrawRectangleRec(side_panel, LLGRAY);
+		DrawRectangleLinesEx(side_panel, 15, CYAN);
+		DrawRectangleLinesEx(side_panel, 7, DARKGRAY);
+
+		// Show the number of moves
+		DrawText(TextFormat("MOVES: %2d", moves), side_panel.x + side_panel.width / 2 - MeasureText(TextFormat("MOVES: %2d", moves), 40) / 2, side_panel.y + 50, 40, CYAN);
+
+		// Progress bar
+		DrawRectangleLines(max_bar.x, max_bar.y, max_bar.width, max_bar.height, BLACK);
+		DrawRectangle(max_bar.x + 2, max_bar.y + 2, bar_width, max_bar.height - 4, CYAN);
+
+		if(mouseOnBack)
+			DrawRectangleRec(back_button, DARKGRAY);
+		else
+			DrawRectangleRec(back_button, GRAY);
+
+		DrawRectangleLines((int)back_button.x, (int)back_button.y, (int)back_button.width, (int)back_button.height, DARKGRAY);
+		DrawText("BACK", (int)back_button.x + ((int)back_button.width) / 2 - MeasureText("BACK", 40) / 2, (int)back_button.y + ((int)back_button.height) / 2 - 20, 40, RAYWHITE);
 
 		EndDrawing();
 	}
-	else if(cur_mode == MANUAL)
+	else if (cur_mode == MANUAL)
 	{
-		//Updating 
-		State* drawn_state = cur_state;
-		
+		Rectangle back_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (170 / 2), SCREEN_HEIGHT - 30 - 50, 170, 60};
+
+		// Updating
+		if(gr_state->trans.in_transition == false && !isGoal(*cur_state))
+		{
+			int next_blank_row = cur_state->blank_row;
+			int next_blank_col = cur_state->blank_col;
+
+			if(IsKeyPressed(KEY_UP) && cur_state->blank_row - 1 >= 0)
+				next_blank_row--;
+			else if(IsKeyPressed(KEY_DOWN) && cur_state->blank_row + 1 < gr_state->board_size)
+				next_blank_row++;
+			else if(IsKeyPressed(KEY_LEFT) && cur_state->blank_col - 1 >= 0)
+				next_blank_col--;
+			else if(IsKeyPressed(KEY_RIGHT) && cur_state->blank_col + 1 < gr_state->board_size)
+				next_blank_col++;
+
+			if(next_blank_col != cur_state->blank_col || next_blank_row != cur_state->blank_row)
+			{
+				manual_next_state = CopyState(cur_state);
+
+				manual_next_state->board[cur_state->blank_row][cur_state->blank_col] = manual_next_state->board[next_blank_row][next_blank_col];
+				manual_next_state->board[next_blank_row][next_blank_col] = 0;
+
+				manual_next_state->blank_row = next_blank_row;
+				manual_next_state->blank_col = next_blank_col;
+
+				gr_state->trans.in_transition = true;
+				gr_state->trans.offset_row = cur_state->blank_row - manual_next_state->blank_row;
+				gr_state->trans.offset_col = cur_state->blank_col - manual_next_state->blank_col;
+			}
+		}
+
+		// Update buttons
+		bool mouseOnBack = CheckCollisionPointRec(GetMousePosition(), back_button);
+
+		if ((CheckCollisionPointRec(GetMousePosition(), back_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
+		{
+			//TODO
+		}
+
+		State *drawn_state = cur_state;
+
 		// Drawing move
 		BeginDrawing();
 
 		ClearBackground(CYAN);
 
-		if(gr_state->trans.in_transition == false || isGoal(*drawn_state))
+		if (gr_state->trans.in_transition == false || isGoal(*drawn_state))
 		{
 			for (int i = 0; i < gr_state->board_size; i++)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (drawn_state->board[i][j] != 0)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-						// DrawTexture(textures[ListGetNth(gr_state->move_list,1)->board[i][j]-1],gr_state->positions[i][j].x,gr_state->positions[i][j].y,WHITE);
 						char *buf = int_to_ascii(drawn_state->board[i][j]);
 						DrawText(
 							buf,
@@ -715,6 +852,63 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 						free(buf);
 					}
 		}
+		else if(gr_state->trans.in_transition == true)
+		{
+			float off_row = gr_state->trans.offset_row * (gr_state->edge / ANIMATION_SPEED);
+			float off_col = gr_state->trans.offset_col * (gr_state->edge / ANIMATION_SPEED);
+			gr_state->positions[manual_next_state->blank_row][manual_next_state->blank_col].x += off_col;
+			gr_state->positions[manual_next_state->blank_row][manual_next_state->blank_col].y += off_row;
+
+			for (int i = 0; i < gr_state->board_size; i++)
+					for (int j = 0; j < gr_state->board_size; j++)
+						if (drawn_state->board[i][j] != 0)
+						{
+							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+							char *buf = int_to_ascii(drawn_state->board[i][j]);
+							DrawText(
+								buf,
+								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+								gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+								(int)(gr_state->edge / 2), CYAN);
+							free(buf);
+						}
+
+			point blank_next = gr_state->positions[manual_next_state->blank_row][manual_next_state->blank_col];
+			point blank_prev = gr_state->positions[cur_state->blank_row][cur_state->blank_col];
+
+			if (blank_next.x == blank_prev.x && blank_next.y == blank_prev.y)
+			{
+				moves++;
+				gr_state->trans.in_transition = false;
+
+				off_row = gr_state->trans.offset_row * gr_state->edge;
+				off_col = gr_state->trans.offset_col * gr_state->edge;
+				gr_state->positions[manual_next_state->blank_row][manual_next_state->blank_col].x -= off_col;
+				gr_state->positions[manual_next_state->blank_row][manual_next_state->blank_col].y -= off_row;
+
+				free(cur_state);
+				cur_state = manual_next_state;
+				manual_next_state = NULL;
+			}	
+		}
+
+		// Draw the side panel
+		Rectangle side_panel = {0, 0, SCREEN_WIDTH - PUZZLE_WIDTH, SCREEN_HEIGHT};
+		DrawRectangleRec(side_panel, LLGRAY);
+		DrawRectangleLinesEx(side_panel, 15, CYAN);
+		DrawRectangleLinesEx(side_panel, 7, DARKGRAY);
+
+		// Show the number of moves
+		DrawText(TextFormat("MOVES: %2d", moves), side_panel.x + side_panel.width / 2 - MeasureText(TextFormat("MOVES: %2d", moves), 40) / 2, side_panel.y + 50, 40, CYAN);
+
+		if(mouseOnBack)
+			DrawRectangleRec(back_button, DARKGRAY);
+		else
+			DrawRectangleRec(back_button, GRAY);
+
+		DrawRectangleLines((int)back_button.x, (int)back_button.y, (int)back_button.width, (int)back_button.height, DARKGRAY);
+		DrawText("BACK", (int)back_button.x + ((int)back_button.width) / 2 - MeasureText("BACK", 40) / 2, (int)back_button.y + ((int)back_button.height) / 2 - 20, 40, RAYWHITE);
+
 
 		EndDrawing();
 	}
@@ -722,7 +916,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 void interface_close()
 {
-	free(textures);
 	CloseAudioDevice();
 	CloseWindow();
 }
@@ -782,7 +975,7 @@ Graphics create_gra_state(int size)
 	for (int i = 0; i < size; i++)
 		gr->positions[i] = malloc(sizeof(point) * size);
 
-	point offset = {0, 0};
+	point offset = {SCREEN_WIDTH - PUZZLE_WIDTH, 0};
 	for (int i = 0; i < size; i++)
 	{
 		for (int j = 0; j < size; j++)
@@ -790,7 +983,7 @@ Graphics create_gra_state(int size)
 			gr->positions[i][j] = offset;
 			offset.x += gr->edge;
 		}
-		offset.x = 0;
+		offset.x = SCREEN_WIDTH - PUZZLE_WIDTH;
 		offset.y += gr->edge;
 	}
 

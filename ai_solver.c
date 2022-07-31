@@ -42,9 +42,9 @@ void* solve_new(void* arg)
 
     while(min != 0)
     {    
+        printf("Current estimated min moves:%d\n",min);
         min = solver_helper(state, Bound, Visited, &final);
         Bound = min;
-        printf("Current estimated min moves:%d\n",min);
     }
 
     time_t t1 = time(0);
