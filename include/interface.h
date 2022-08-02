@@ -24,4 +24,4 @@ void interface_draw_frame(Graphics* state_ptr, bool play, bool *in_menu);
 Graphics create_gra_state(int size);
 void free_gra_state(Graphics gr);
 
-Graphics* create_dumy_state(void);
+Graphics create_dumy_state(void);

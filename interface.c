@@ -126,7 +126,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					printf("Invalid puzzle.\n");
 					started = false;
 					destroyfunc(cur_state);
-					gr_state_ptr = create_dumy_state();
+					free_gra_state(gr_state);
+					*gr_state_ptr = create_dumy_state();
+					(*gr_state_ptr)->board_size = -1;
 					letter_count = 0;
 					puzzle_str[0] = '\0';
 					return;
@@ -152,7 +154,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				printf("Puzzle is not solvable\n");
 				started = false;
 				destroyfunc(cur_state);
-				gr_state_ptr = create_dumy_state();
+				free_gra_state(gr_state);
+				*gr_state_ptr = create_dumy_state();
+				(*gr_state_ptr)->board_size = -1;
 				letter_count = 0;
 				puzzle_str[0] = '\0';
 				return;
@@ -163,7 +167,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				printf("This puzzle is already solved\n");
 				started = false;
 				destroyfunc(cur_state);
-				gr_state_ptr = create_dumy_state();
+				free_gra_state(gr_state);
+				*gr_state_ptr = create_dumy_state();
+				(*gr_state_ptr)->board_size = -1;
 				return;
 			}
 
@@ -172,7 +178,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				printf("No mode selected\n");
 				started = false;
 				destroyfunc(cur_state);
-				gr_state_ptr = create_dumy_state();
+				free_gra_state(gr_state);
+				*gr_state_ptr = create_dumy_state();
+				(*gr_state_ptr)->board_size = -1;
 				return;
 			}
 
@@ -184,15 +192,12 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				arg->input = cur_state;
 				ListPtr *temp = &gr_state->move_list;
 				arg->result = temp;
-				// arg->menu = in_menu;
 
 				pthread_t thread_id;
 
 				pthread_create(&thread_id, NULL, solve_new, arg);
 
 				// solve_new(arg);
-
-				// free(arg);
 
 				solver_running = true;
 				started = false;
@@ -614,6 +619,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 				*in_menu = false;
 				moves = 0;
 				total_moves = ListSize(gr_state->move_list);
+				cur_state = ListGetNth(gr_state->move_list, 1);
 			}
 		}
 
@@ -641,7 +647,15 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 		}
 
 		// Get Move
-		State *prev = ListGetNth(gr_state->move_list, 1);
+		if(cur_state == NULL || !isGoal(*cur_state))
+			cur_state = ListGetNth(gr_state->move_list, 1);
+		else if(gr_state->move_list != NULL)
+		{
+			ListRemove_nth(gr_state->move_list, 1);
+			freeList(gr_state->move_list);
+			gr_state->move_list = NULL;
+		}
+			
 
 		//Start Drawing
 		BeginDrawing();
@@ -649,14 +663,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 		// Καθαρισμός, θα τα σχεδιάσουμε όλα από την αρχή
 		ClearBackground(DARKGRAY);
 
-		if ((play == false && gr_state->trans.in_transition == false) || isGoal(*prev) || first_time == true)
+		if ((play == false && gr_state->trans.in_transition == false) || isGoal(*cur_state) || first_time == true)
 		{
 			for (int i = 0; i < gr_state->board_size; i++)
 				for (int j = 0; j < gr_state->board_size; j++)
-					if (prev->board[i][j] != 0)
+					if (cur_state->board[i][j] != 0)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-						char *buf = int_to_ascii(((State *)ListGetNth(gr_state->move_list, 1))->board[i][j]);
+						char *buf = int_to_ascii(cur_state->board[i][j]);
 						DrawText(
 							buf,
 							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -665,7 +679,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 						free(buf);
 					}
 
-			if (isGoal(*prev))
+			if (isGoal(*cur_state))
 			{
 				DrawText(
 					"PRESS [ESC] TO EXIT",
@@ -709,15 +723,15 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			{
 				gr_state->trans.in_transition = true;
 
-				gr_state->trans.offset_row = prev->blank_row - next->blank_row;
-				gr_state->trans.offset_col = prev->blank_col - next->blank_col;
+				gr_state->trans.offset_row = cur_state->blank_row - next->blank_row;
+				gr_state->trans.offset_col = cur_state->blank_col - next->blank_col;
 
 				for (int i = 0; i < gr_state->board_size; i++)
 					for (int j = 0; j < gr_state->board_size; j++)
-						if (prev->board[i][j] != 0)
+						if (cur_state->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-							char *buf = int_to_ascii(((State *)ListGetNth(gr_state->move_list, 1))->board[i][j]);
+							char *buf = int_to_ascii(cur_state->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -735,10 +749,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 				for (int i = 0; i < gr_state->board_size; i++)
 					for (int j = 0; j < gr_state->board_size; j++)
-						if (((State *)ListGetNth(gr_state->move_list, 1))->board[i][j] != 0)
+						if (cur_state->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-							char *buf = int_to_ascii(((State *)ListGetNth(gr_state->move_list, 1))->board[i][j]);
+							char *buf = int_to_ascii(cur_state->board[i][j]);
 							DrawText(
 								buf,
 								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
@@ -748,12 +762,13 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 						}
 
 				point blank_next = gr_state->positions[next->blank_row][next->blank_col];
-				point blank_prev = gr_state->positions[prev->blank_row][prev->blank_col];
+				point blank_prev = gr_state->positions[cur_state->blank_row][cur_state->blank_col];
 
 				if (blank_next.x == blank_prev.x && blank_next.y == blank_prev.y)
 				{
 					moves++;
 					destroyfunc(ListRemove_nth(gr_state->move_list, 1));
+					cur_state = next;
 					gr_state->trans.in_transition = false;
 					off_row = gr_state->trans.offset_row * gr_state->edge;
 					off_col = gr_state->trans.offset_col * gr_state->edge;
@@ -796,14 +811,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			int next_blank_row = cur_state->blank_row;
 			int next_blank_col = cur_state->blank_col;
 
-			if(IsKeyPressed(KEY_UP) && cur_state->blank_row - 1 >= 0)
-				next_blank_row--;
-			else if(IsKeyPressed(KEY_DOWN) && cur_state->blank_row + 1 < gr_state->board_size)
+			if(IsKeyPressed(KEY_UP) && cur_state->blank_row + 1 < gr_state->board_size)
 				next_blank_row++;
-			else if(IsKeyPressed(KEY_LEFT) && cur_state->blank_col - 1 >= 0)
-				next_blank_col--;
-			else if(IsKeyPressed(KEY_RIGHT) && cur_state->blank_col + 1 < gr_state->board_size)
+			else if(IsKeyPressed(KEY_DOWN) && cur_state->blank_row - 1 >= 0)
+				next_blank_row--;
+			else if(IsKeyPressed(KEY_LEFT) && cur_state->blank_col + 1 < gr_state->board_size)
 				next_blank_col++;
+			else if(IsKeyPressed(KEY_RIGHT) && cur_state->blank_col - 1 >= 0)
+				next_blank_col--;
 
 			if(next_blank_col != cur_state->blank_col || next_blank_row != cur_state->blank_row)
 			{
@@ -826,7 +841,60 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 		if ((CheckCollisionPointRec(GetMousePosition(), back_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
 		{
-			//TODO
+			int MAX_CHAR = gr_state->board_size * gr_state->board_size;
+
+			int temp = MAX_CHAR;
+			if (temp > 9)
+			{
+				temp -= 9;
+				temp *= 2;
+				temp += 8;
+			}
+			MAX_CHAR--;
+			MAX_CHAR += temp;
+
+			if (puzzle_str != NULL)
+				free(puzzle_str);
+
+			puzzle_str = malloc(sizeof(char) * (MAX_CHAR + 1));
+			letter_count = MAX_CHAR;
+
+			int index = 0;
+			for (int i = 0; i < gr_state->board_size; i++)
+			{
+				for (int j = 0; j < gr_state->board_size; j++)
+				{
+					if(cur_state->board[i][j] == 0)
+						puzzle_str[index++] = '0';
+					else
+					{
+						char* buf = int_to_ascii(cur_state->board[i][j]);
+
+						int k;
+						for (k = 0; k < strlen(buf); k++)
+							puzzle_str[index + k] = buf[k];
+
+						index += k;
+					}
+					puzzle_str[index++] = ' ';
+				}
+			}
+			puzzle_str[MAX_CHAR] = '\0';
+
+			destroyfunc(cur_state);
+
+			temp = gr_state->board_size;
+
+			gr_state->move_list = NULL;
+			free_gra_state(gr_state);
+			*gr_state_ptr = create_dumy_state();
+
+			(*gr_state_ptr)->board_size = temp;
+
+			cur_state = NULL;
+			*in_menu = true;
+			started = false;
+			return;
 		}
 
 		State *drawn_state = cur_state;
@@ -834,7 +902,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 		// Drawing move
 		BeginDrawing();
 
-		ClearBackground(CYAN);
+		ClearBackground(DARKGRAY);
 
 		if (gr_state->trans.in_transition == false || isGoal(*drawn_state))
 		{
@@ -1008,16 +1076,13 @@ void free_gra_state(Graphics gr)
 	}
 }
 
-Graphics *create_dumy_state(void)
+Graphics create_dumy_state(void)
 {
-	Graphics *gr_state_ptr = malloc(sizeof(Graphics));
-	*gr_state_ptr = malloc(sizeof(gra_state));
-
-	Graphics gr_state = *gr_state_ptr;
+	Graphics gr_state = malloc(sizeof(gra_state));
 
 	gr_state->board_size = -1;
 	gr_state->move_list = NULL;
 	gr_state->positions = NULL;
 
-	return gr_state_ptr;
+	return gr_state;
 }

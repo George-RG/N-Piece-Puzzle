@@ -97,14 +97,14 @@ int main (int argc , char* argv[])
     //     return 0;
     // }
 
-    RB tree = RB_Initialize(destroyfunc,compare);
-    PQ Queue = PQ_Initialize(compare_evals,destroyfunc);
+    // RB tree = RB_Initialize(destroyfunc,compare);
+    // PQ Queue = PQ_Initialize(compare_evals,destroyfunc);
 
-    evaluate(initial_state);
+    // evaluate(initial_state);
 
-    RB_InsertKey(tree,initial_state);
+    // RB_InsertKey(tree,initial_state);
 
-    Graf = create_gra_state(N);
+    // Graf = create_gra_state(N);
 
     // Graf->move_list = solve(initial_state,Queue,tree);
 
@@ -115,17 +115,17 @@ int main (int argc , char* argv[])
     //     printf("You can enable/disable auto mode later by pressing [A]\n");
     // }
 
-    //Graphics
-	interface_init();
+    // //Graphics
+	// interface_init();
 
-	// Η κλήση αυτή καλεί συνεχόμενα την update_and_draw μέχρι ο χρήστης να κλείσει το παράθυρο
-	start_main_loop(update_and_draw);
+	// // Η κλήση αυτή καλεί συνεχόμενα την update_and_draw μέχρι ο χρήστης να κλείσει το παράθυρο
+	// start_main_loop(update_and_draw);
 
-	interface_close();
+	// interface_close();
 
-    PQ_Destroy(Queue);
-    RB_Destroy(tree);
-    free_gra_state(Graf);
+    // PQ_Destroy(Queue);
+    // RB_Destroy(tree);
+    // free_gra_state(Graf);
 
     return 0;
 }

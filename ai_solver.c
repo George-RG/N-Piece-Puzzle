@@ -42,7 +42,9 @@ void* solve_new(void* arg)
 
     while(min != 0)
     {    
-        printf("Current estimated min moves:%d\n",min);
+        if(min != INT_MAX)
+            printf("Current estimated min moves:%d\n",min);
+        
         min = solver_helper(state, Bound, Visited, &final);
         Bound = min;
     }
@@ -57,7 +59,6 @@ void* solve_new(void* arg)
     printf("Time taken: %f\n",datetime_diff_s);
 
     *(test->result) = move_list;
-    //*(test->menu) = false;
 
     free(arg);
 
