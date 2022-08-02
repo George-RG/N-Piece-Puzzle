@@ -21,7 +21,7 @@ void update_and_draw() {
         auto_test = !auto_test;
     }
 
-	interface_draw_frame(&Graf,(keys_update() ||auto_test),&in_menu);
+	interface_draw_frame(&Graf,&in_menu);
 }
 
 
@@ -35,7 +35,7 @@ int main (int argc , char* argv[])
     Graf->positions = NULL;
 
 
-    int N = 1;
+    //int N = 1;
 
     //Graphics
 	interface_init();
@@ -55,7 +55,7 @@ int main (int argc , char* argv[])
     // int N = atoi(argv[1]);
 
     //int i,j;
-    State* initial_state = malloc(sizeof(State));
+    //State* initial_state = malloc(sizeof(State));
     // initial_state->board = malloc(sizeof(int*) * N);
     // for(i=0; i<N; i++)
     //     initial_state->board[i] = malloc(sizeof(int) * N);

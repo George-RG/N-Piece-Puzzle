@@ -50,11 +50,12 @@ play_mode cur_mode = NONE;
 
 // Solver Globals
 bool solver_running = false;
-int auto_play = 2;
 
 // Auto Globals
 int moves = 0;
 int total_moves = 0;
+bool auto_play = false;
+bool play = false;
 
 // Manual Globals
 State* manual_next_state = NULL;
@@ -69,7 +70,7 @@ void interface_init()
 	clap = LoadSound("assets/clap.wav");
 }
 
-void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
+void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 {
 	Graphics gr_state = *gr_state_ptr;
 
@@ -628,6 +629,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 	else if (cur_mode == AUTO)
 	{
 		Rectangle back_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (170 / 2), SCREEN_HEIGHT - 30 - 50, 170, 60};
+		Rectangle procced_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (210 / 2), SCREEN_HEIGHT / 2 - (70 + 20) / 2, 210, 70};
 
 		// Update 
 		// Update moves progress bar
@@ -640,10 +642,17 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 		// Update buttons
 		bool mouseOnBack = CheckCollisionPointRec(GetMousePosition(), back_button);
+		bool mouseOnProcced = CheckCollisionPointRec(GetMousePosition(), procced_button);
 
 		if ((CheckCollisionPointRec(GetMousePosition(), back_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
 		{
 			//TODO
+		}
+
+		bool procced = false;
+		if (((CheckCollisionPointRec(GetMousePosition(), procced_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))) || IsKeyPressed(KEY_ENTER))
+		{
+			procced = true;
 		}
 
 		// Get Move
@@ -656,6 +665,13 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 			gr_state->move_list = NULL;
 		}
 			
+		if(IsKeyPressed(KEY_A))
+			auto_play = !auto_play;
+
+		if(first_time)
+			play = procced;
+		else
+			play = (procced || auto_play);
 
 		//Start Drawing
 		BeginDrawing();
@@ -699,7 +715,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 					GetScreenWidth() / 2 - MeasureText("PRESS [ENTER] TO START", 40) / 2,
 					GetScreenHeight() / 2 - 70, 40, RED);
 
-				if (IsKeyDown(KEY_ENTER))
+				if (procced)
 					first_time = false;
 			}
 			else
@@ -798,6 +814,25 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool play, bool *in_menu)
 
 		DrawRectangleLines((int)back_button.x, (int)back_button.y, (int)back_button.width, (int)back_button.height, DARKGRAY);
 		DrawText("BACK", (int)back_button.x + ((int)back_button.width) / 2 - MeasureText("BACK", 40) / 2, (int)back_button.y + ((int)back_button.height) / 2 - 20, 40, RAYWHITE);
+
+		if(mouseOnProcced)
+			DrawRectangleRec(procced_button, LIGHTCYAN);
+		else
+			DrawRectangleRec(procced_button, CYAN);
+
+		DrawRectangleLines((int)procced_button.x, (int)procced_button.y, (int)procced_button.width, (int)procced_button.height, DARKGRAY);
+		
+		char *procced_text = "PROCCED";
+		char *start_text = "START";
+		char *buf;
+		if(first_time)
+			buf = start_text;
+		else
+			buf = procced_text;
+
+		DrawText(buf, (int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText(buf, 40) / 2, (int)procced_button.y + ((int)procced_button.height) / 2 - 20, 40, RAYWHITE);
+
+		DrawText("Press Enter to Procced",(int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText("Press Enter to Procced", 20) / 2, (int)procced_button.y + ((int)procced_button.height) + 5 , 20, DARKGRAY);
 
 		EndDrawing();
 	}
