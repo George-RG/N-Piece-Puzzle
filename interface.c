@@ -710,10 +710,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			}
 			else if (first_time)
 			{
-				DrawText(
-					"PRESS [ENTER] TO START",
-					GetScreenWidth() / 2 - MeasureText("PRESS [ENTER] TO START", 40) / 2,
-					GetScreenHeight() / 2 - 70, 40, RED);
+				// DrawText(
+				// 	"PRESS [ENTER] TO START",
+				// 	GetScreenWidth() / 2 - MeasureText("PRESS [ENTER] TO START", 40) / 2,
+				// 	GetScreenHeight() / 2 - 70, 40, RED);
 
 				if (procced)
 					first_time = false;
