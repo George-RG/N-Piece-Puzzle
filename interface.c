@@ -31,6 +31,7 @@ char *remove_spaces(char *str);
 bool first_time = true;
 bool first_end = true;
 Sound clap;
+Texture paste;
 bool started = false;
 State *cur_state = NULL;
 
@@ -68,6 +69,11 @@ void interface_init()
 
 	InitAudioDevice();
 	clap = LoadSound("assets/clap.wav");
+	
+	Image temp = LoadImage("assets/paste.png");
+	ImageResize(&temp,32,32);
+
+	paste = LoadTextureFromImage(temp);
 }
 
 void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
@@ -105,6 +111,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			int i = 0, j;
 			char buff[100];
 			int cur;
+			bool exists[N * N];
 			while (puzzle_str[i] != '\0')
 			{
 				j = 0;
@@ -136,6 +143,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				}
 
 				cur_state->board[row][col] = cur;
+				exists[cur] = true;
 				if(cur == 0)
 				{
 					cur_state->blank_row = row;
@@ -147,6 +155,22 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				{
 					col = 0;
 					row++;
+				}
+			}
+
+			for(int i = 0; i < N * N; i++)
+			{
+				if(!exists[i])
+				{
+					printf("Missing Number.\n");
+					started = false;
+					destroyfunc(cur_state);
+					free_gra_state(gr_state);
+					*gr_state_ptr = create_dumy_state();
+					(*gr_state_ptr)->board_size = -1;
+					letter_count = 0;
+					puzzle_str[0] = '\0';
+					return;
 				}
 			}
 
@@ -352,6 +376,23 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 						letter_count = 0;
 					puzzle_str[letter_count] = '\0';
 				}
+
+				if((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_V))
+				{
+					const char *clipboard = GetClipboardText();
+					if (clipboard != NULL)
+					{
+						for (int i = 0; i < strlen(clipboard); i++)
+						{
+							if ((((clipboard[i] >= '0') && (clipboard[i] <= '9')) || (clipboard[i] == ' ')) && (letter_count < MAX_CHAR))
+							{
+								puzzle_str[letter_count] = clipboard[i];
+								puzzle_str[letter_count + 1] = '\0'; // Add null terminator at the end of the string.
+								letter_count++;
+							}
+						}
+					}
+				}
 			}
 			else if (mouseOnSize)
 			{
@@ -446,13 +487,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				// Exit the game
 				if(puzzle_str != NULL)
 					free(puzzle_str);
-
-				// Unload all loaded data (textures, sounds, models...)
-				UnloadSound(clap);
 				
-				CloseAudioDevice();
-
-				CloseWindow();
+				interface_close();
 
 				exit(0);
 			}
@@ -710,11 +746,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			}
 			else if (first_time)
 			{
-				// DrawText(
-				// 	"PRESS [ENTER] TO START",
-				// 	GetScreenWidth() / 2 - MeasureText("PRESS [ENTER] TO START", 40) / 2,
-				// 	GetScreenHeight() / 2 - 70, 40, RED);
-
 				if (procced)
 					first_time = false;
 			}
@@ -815,10 +846,12 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		DrawRectangleLines((int)back_button.x, (int)back_button.y, (int)back_button.width, (int)back_button.height, DARKGRAY);
 		DrawText("BACK", (int)back_button.x + ((int)back_button.width) / 2 - MeasureText("BACK", 40) / 2, (int)back_button.y + ((int)back_button.height) / 2 - 20, 40, RAYWHITE);
 
-		if(mouseOnProcced)
+		if(first_end == true && !mouseOnProcced && !auto_play)
+			DrawRectangleRec(procced_button, CYAN);
+		else if(first_end == true && mouseOnProcced && !auto_play)
 			DrawRectangleRec(procced_button, LIGHTCYAN);
 		else
-			DrawRectangleRec(procced_button, CYAN);
+			DrawRectangleRec(procced_button, GRAY);
 
 		DrawRectangleLines((int)procced_button.x, (int)procced_button.y, (int)procced_button.width, (int)procced_button.height, DARKGRAY);
 		
@@ -832,7 +865,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 		DrawText(buf, (int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText(buf, 40) / 2, (int)procced_button.y + ((int)procced_button.height) / 2 - 20, 40, RAYWHITE);
 
-		DrawText("Press Enter to Procced",(int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText("Press Enter to Procced", 20) / 2, (int)procced_button.y + ((int)procced_button.height) + 5 , 20, DARKGRAY);
+		if(!auto_play)
+			DrawText("Press Enter to Procced",(int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText("Press Enter to Procced", 20) / 2, (int)procced_button.y + ((int)procced_button.height) + 5 , 20, DARKGRAY);
 
 		EndDrawing();
 	}
@@ -1019,6 +1053,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 void interface_close()
 {
+	// Unload all loaded data (textures, sounds, models...)
+	UnloadSound(clap);
+	UnloadTexture(paste);
+
 	CloseAudioDevice();
 	CloseWindow();
 }
