@@ -34,6 +34,7 @@ Sound clap;
 Texture paste;
 bool started = false;
 State *cur_state = NULL;
+float seconds=0;
 
 // Text Box globals
 int framesCounter = 0;
@@ -51,6 +52,7 @@ play_mode cur_mode = NONE;
 
 // Solver Globals
 bool solver_running = false;
+char* solver_str = NULL;
 
 // Auto Globals
 int moves = 0;
@@ -71,7 +73,7 @@ void interface_init()
 	clap = LoadSound("assets/clap.wav");
 	
 	Image temp = LoadImage("assets/paste.png");
-	ImageResize(&temp,32,32);
+	ImageResize(&temp,40,40);
 
 	paste = LoadTextureFromImage(temp);
 }
@@ -222,8 +224,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 				pthread_create(&thread_id, NULL, solve_new, arg);
 
-				// solve_new(arg);
-
 				solver_running = true;
 				started = false;
 			}
@@ -314,7 +314,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		}
 
 		// Rectangle positions
-		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2, 300, min, 50};
+		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2 - paste.width / 2 - 10 / 2, 300, min, 50};
+		Rectangle pasteBox = (Rectangle){textBox.x + textBox.width + 10, 300, textBox.height, textBox.height};
 		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
 		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 650, 220, 80};
 		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
@@ -330,6 +331,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		bool mouseOnMan = false;
 		bool mouseOnExit = false;
 		bool mouseOnStart = false;
+		bool mouseOnPaste = false;
+		bool clickedPaste = false;
 
 		//
 		if (solver_running == false)
@@ -346,8 +349,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				mouseOnSize = true;
 			else
 				mouseOnSize = false;
+			
 
-			if (mouseOnText && puzzle_str != NULL)
+			mouseOnPaste = CheckCollisionPointRec(GetMousePosition(), pasteBox);
+
+			if(mouseOnPaste && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+				clickedPaste = true;
+
+			if ((mouseOnText || clickedPaste) && puzzle_str != NULL)
 			{
 				// Set the window's cursor to the I-Beam
 				SetMouseCursor(MOUSE_CURSOR_IBEAM);
@@ -377,7 +386,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					puzzle_str[letter_count] = '\0';
 				}
 
-				if((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_V))
+				if(((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_V)) || clickedPaste)
 				{
 					const char *clipboard = GetClipboardText();
 					if (clipboard != NULL)
@@ -642,13 +651,46 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		DrawRectangleLines((int)exitBox.x, (int)exitBox.y, (int)exitBox.width, (int)exitBox.height, DARKGRAY);
 		DrawText("EXIT", (int)exitBox.x + ((int)exitBox.width) / 2 - MeasureText("EXIT", 40) / 2, (int)exitBox.y + ((int)exitBox.height) / 2 - 20, 40, RAYWHITE);
 
+		if(mouseOnPaste)
+			DrawRectangleRec(pasteBox, LIGHTCYAN);
+		else
+			DrawRectangleRec(pasteBox, CYAN);
+
+		DrawRectangleLines((int)pasteBox.x, (int)pasteBox.y, (int)pasteBox.width, (int)pasteBox.height, DARKGRAY);
+		DrawTexture(paste, pasteBox.x + pasteBox.width/2 - paste.width / 2 , pasteBox.y + pasteBox.height/2 - paste.height/2, CYAN);
 
 		if (solver_running)
 		{
+			float delta = GetFrameTime();
+			seconds += delta;
+
+			char final_str[] = "Solving...";
+
+			if(solver_str == NULL)
+			{
+				solver_str = (char*)malloc(sizeof(char) * (strlen(final_str) + 1));
+				solver_str[0] = '\0';
+			}
+
+			if(seconds > 0.15)
+			{	
+				if(strlen(solver_str) == strlen(final_str))
+				{
+					solver_str[7] = '\0';
+				}
+				else
+				{
+					size_t temp = strlen(solver_str);
+					solver_str[temp] = final_str[temp];
+					solver_str[temp+1] = '\0';
+				}
+				seconds = 0;
+			}
+
 			Rectangle rec = (Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()};
 			DrawRectangleRec(rec, TRANSPARENT_BLACK);
 
-			DrawText("Solving...", SCREEN_WIDTH / 2 - MeasureText("Solving...", 30) / 2, SCREEN_HEIGHT / 2 - 30, 30, RAYWHITE);
+			DrawText(solver_str, SCREEN_WIDTH / 2 - MeasureText(solver_str, 30) / 2, SCREEN_HEIGHT / 2 - 30, 30, RAYWHITE);
 
 			if (gr_state->move_list != NULL)
 			{
