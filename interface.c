@@ -32,6 +32,7 @@ bool first_time = true;
 bool first_end = true;
 Sound clap;
 Texture paste;
+Texture copy;
 bool started = false;
 State *cur_state = NULL;
 float seconds = 0;
@@ -76,6 +77,11 @@ void interface_init()
 	ImageResize(&temp, 40, 40);
 
 	paste = LoadTextureFromImage(temp);
+
+	temp = LoadImage("assets/copy.png");
+	ImageResize(&temp, 40, 40);
+
+	copy = LoadTextureFromImage(temp);
 }
 
 void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
@@ -681,7 +687,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			DrawRectangleRec(copyBox, CYAN);
 
 		DrawRectangleLines((int)copyBox.x, (int)copyBox.y, (int)copyBox.width, (int)copyBox.height, DARKGRAY);
-		// DrawTexture(copy, copyBox.x + copyBox.width/2 - paste.width / 2 , copyBox.y + copyBox.height/2 - paste.height/2, CYAN);
+		DrawTexture(copy, copyBox.x + copyBox.width/2 - paste.width / 2 , copyBox.y + copyBox.height/2 - paste.height/2, CYAN);
 
 		if (solver_running)
 		{
@@ -1206,6 +1212,7 @@ void interface_close()
 	// Unload all loaded data (textures, sounds, models...)
 	UnloadSound(clap);
 	UnloadTexture(paste);
+	UnloadTexture(copy);
 
 	CloseAudioDevice();
 	CloseWindow();
