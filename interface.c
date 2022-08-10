@@ -34,7 +34,7 @@ Sound clap;
 Texture paste;
 bool started = false;
 State *cur_state = NULL;
-float seconds=0;
+float seconds = 0;
 
 // Text Box globals
 int framesCounter = 0;
@@ -52,7 +52,7 @@ play_mode cur_mode = NONE;
 
 // Solver Globals
 bool solver_running = false;
-char* solver_str = NULL;
+char *solver_str = NULL;
 
 // Auto Globals
 int moves = 0;
@@ -61,7 +61,7 @@ bool auto_play = false;
 bool play = false;
 
 // Manual Globals
-State* manual_next_state = NULL;
+State *manual_next_state = NULL;
 
 void interface_init()
 {
@@ -71,9 +71,9 @@ void interface_init()
 
 	InitAudioDevice();
 	clap = LoadSound("assets/clap.wav");
-	
+
 	Image temp = LoadImage("assets/paste.png");
-	ImageResize(&temp,40,40);
+	ImageResize(&temp, 40, 40);
 
 	paste = LoadTextureFromImage(temp);
 }
@@ -146,7 +146,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 				cur_state->board[row][col] = cur;
 				exists[cur] = true;
-				if(cur == 0)
+				if (cur == 0)
 				{
 					cur_state->blank_row = row;
 					cur_state->blank_col = col;
@@ -160,16 +160,17 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				}
 			}
 
-			for(int i = 0; i < N * N; i++)
+			for (int i = 0; i < N * N; i++)
 			{
-				if(!exists[i])
+				if (!exists[i])
 				{
 					printf("Missing Number.\n");
 					started = false;
 					destroyfunc(cur_state);
+					int temp_size = (*gr_state_ptr)->board_size;
 					free_gra_state(gr_state);
 					*gr_state_ptr = create_dumy_state();
-					(*gr_state_ptr)->board_size = -1;
+					(*gr_state_ptr)->board_size = temp_size;
 					letter_count = 0;
 					puzzle_str[0] = '\0';
 					return;
@@ -181,9 +182,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				printf("Puzzle is not solvable\n");
 				started = false;
 				destroyfunc(cur_state);
+				int temp_size = (*gr_state_ptr)->board_size;
 				free_gra_state(gr_state);
 				*gr_state_ptr = create_dumy_state();
-				(*gr_state_ptr)->board_size = -1;
+				(*gr_state_ptr)->board_size = temp_size;
 				letter_count = 0;
 				puzzle_str[0] = '\0';
 				return;
@@ -194,9 +196,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				printf("This puzzle is already solved\n");
 				started = false;
 				destroyfunc(cur_state);
+				int temp_size = (*gr_state_ptr)->board_size;
 				free_gra_state(gr_state);
 				*gr_state_ptr = create_dumy_state();
-				(*gr_state_ptr)->board_size = -1;
+				(*gr_state_ptr)->board_size = temp_size;
 				return;
 			}
 
@@ -306,7 +309,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			if (min < MeasureText(max_string, 35))
 				min = MeasureText(max_string, 35);
 
-			int max = SCREEN_WIDTH - 50;
+			int max = SCREEN_WIDTH - 250;
 			if (min > max)
 				min = max;
 
@@ -314,8 +317,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		}
 
 		// Rectangle positions
-		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2 - paste.width / 2 - 10 / 2, 300, min, 50};
+		Rectangle textBox = (Rectangle){SCREEN_WIDTH / 2 - min / 2 - ((paste.width / 2) * 2) - 20 / 2, 300, min, 50};
 		Rectangle pasteBox = (Rectangle){textBox.x + textBox.width + 10, 300, textBox.height, textBox.height};
+		Rectangle copyBox = (Rectangle){pasteBox.x + pasteBox.width + 10, 300, textBox.height, textBox.height};
 		Rectangle sizeBox = (Rectangle){SCREEN_WIDTH / 2 + (MeasureText("Puzzle Size", 30) + 50 + 10) / 2 - 50, 190, 50, 50};
 		Rectangle enterBox = (Rectangle){SCREEN_WIDTH / 2 - 110, 650, 220, 80};
 		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
@@ -333,6 +337,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		bool mouseOnStart = false;
 		bool mouseOnPaste = false;
 		bool clickedPaste = false;
+		bool mouseOnCopy = false;
+		bool clickedCopy = false;
 
 		//
 		if (solver_running == false)
@@ -349,23 +355,28 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				mouseOnSize = true;
 			else
 				mouseOnSize = false;
-			
 
 			mouseOnPaste = CheckCollisionPointRec(GetMousePosition(), pasteBox);
 
-			if(mouseOnPaste && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+			if (mouseOnPaste && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
 				clickedPaste = true;
 
-			if ((mouseOnText || clickedPaste) && puzzle_str != NULL)
+			mouseOnCopy = CheckCollisionPointRec(GetMousePosition(), copyBox);
+
+			if (mouseOnCopy && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+				clickedCopy = true;
+
+			if ((mouseOnText || clickedPaste || clickedCopy) && puzzle_str != NULL)
 			{
-				// Set the window's cursor to the I-Beam
-				SetMouseCursor(MOUSE_CURSOR_IBEAM);
+				if (mouseOnText)
+					// Set the window's cursor to the I-Beam
+					SetMouseCursor(MOUSE_CURSOR_IBEAM);
 
 				// Update the puzzle string
 				int key = GetCharPressed();
 
 				// Check if more characters have been pressed on the same frame
-				while (key > 0)
+				while (key > 0 && !clickedPaste && !clickedCopy)
 				{
 					// NOTE: Only allow keys in range [48..57] (0..9)
 					if ((((key >= '0') && (key <= '9')) || (key == ' ')) && (letter_count < MAX_CHAR))
@@ -378,7 +389,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					key = GetCharPressed(); // Check next character in the queue
 				}
 
-				if (IsKeyPressed(KEY_BACKSPACE))
+				if (IsKeyPressed(KEY_BACKSPACE) && !clickedPaste && !clickedCopy)
 				{
 					letter_count--;
 					if (letter_count < 0)
@@ -386,7 +397,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					puzzle_str[letter_count] = '\0';
 				}
 
-				if(((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_V)) || clickedPaste)
+				if (((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_V)) || clickedPaste)
 				{
 					const char *clipboard = GetClipboardText();
 					if (clipboard != NULL)
@@ -401,6 +412,11 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 							}
 						}
 					}
+				}
+
+				if (((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_C)) || clickedCopy)
+				{
+					SetClipboardText(puzzle_str);
 				}
 			}
 			else if (mouseOnSize)
@@ -494,9 +510,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			if ((CheckCollisionPointRec(GetMousePosition(), exitBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
 			{
 				// Exit the game
-				if(puzzle_str != NULL)
+				if (puzzle_str != NULL)
 					free(puzzle_str);
-				
+
 				interface_close();
 
 				exit(0);
@@ -643,7 +659,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 		DrawText("Press ENTER to start", SCREEN_WIDTH / 2 - MeasureText("Press ENTER to start", 20) / 2, (int)enterBox.y + (int)enterBox.height + 10, 20, DARKGRAY);
 
-		if(mouseOnExit)
+		if (mouseOnExit)
 			DrawRectangleRec(exitBox, DARKGRAY);
 		else
 			DrawRectangleRec(exitBox, GRAY);
@@ -651,13 +667,21 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		DrawRectangleLines((int)exitBox.x, (int)exitBox.y, (int)exitBox.width, (int)exitBox.height, DARKGRAY);
 		DrawText("EXIT", (int)exitBox.x + ((int)exitBox.width) / 2 - MeasureText("EXIT", 40) / 2, (int)exitBox.y + ((int)exitBox.height) / 2 - 20, 40, RAYWHITE);
 
-		if(mouseOnPaste)
+		if (mouseOnPaste)
 			DrawRectangleRec(pasteBox, LIGHTCYAN);
 		else
 			DrawRectangleRec(pasteBox, CYAN);
 
 		DrawRectangleLines((int)pasteBox.x, (int)pasteBox.y, (int)pasteBox.width, (int)pasteBox.height, DARKGRAY);
-		DrawTexture(paste, pasteBox.x + pasteBox.width/2 - paste.width / 2 , pasteBox.y + pasteBox.height/2 - paste.height/2, CYAN);
+		DrawTexture(paste, pasteBox.x + pasteBox.width / 2 - paste.width / 2, pasteBox.y + pasteBox.height / 2 - paste.height / 2, CYAN);
+
+		if (mouseOnCopy)
+			DrawRectangleRec(copyBox, LIGHTCYAN);
+		else
+			DrawRectangleRec(copyBox, CYAN);
+
+		DrawRectangleLines((int)copyBox.x, (int)copyBox.y, (int)copyBox.width, (int)copyBox.height, DARKGRAY);
+		// DrawTexture(copy, copyBox.x + copyBox.width/2 - paste.width / 2 , copyBox.y + copyBox.height/2 - paste.height/2, CYAN);
 
 		if (solver_running)
 		{
@@ -666,15 +690,15 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 			char final_str[] = "Solving...";
 
-			if(solver_str == NULL)
+			if (solver_str == NULL)
 			{
-				solver_str = (char*)malloc(sizeof(char) * (strlen(final_str) + 1));
+				solver_str = (char *)malloc(sizeof(char) * (strlen(final_str) + 1));
 				solver_str[0] = '\0';
 			}
 
-			if(seconds > 0.15)
-			{	
-				if(strlen(solver_str) == strlen(final_str))
+			if (seconds > 0.15)
+			{
+				if (strlen(solver_str) == strlen(final_str))
 				{
 					solver_str[7] = '\0';
 				}
@@ -682,7 +706,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				{
 					size_t temp = strlen(solver_str);
 					solver_str[temp] = final_str[temp];
-					solver_str[temp+1] = '\0';
+					solver_str[temp + 1] = '\0';
 				}
 				seconds = 0;
 			}
@@ -709,7 +733,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		Rectangle back_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (170 / 2), SCREEN_HEIGHT - 30 - 50, 170, 60};
 		Rectangle procced_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (210 / 2), SCREEN_HEIGHT / 2 - (70 + 20) / 2, 210, 70};
 
-		// Update 
+		// Update
 		// Update moves progress bar
 		int MAX_BAR_WIDTH = 300;
 		Rectangle max_bar = (Rectangle){(GetScreenWidth() - PUZZLE_WIDTH) / 2 - MAX_BAR_WIDTH / 2, 100, MAX_BAR_WIDTH, 20};
@@ -724,7 +748,62 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 		if ((CheckCollisionPointRec(GetMousePosition(), back_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
 		{
-			//TODO
+			int MAX_CHAR = gr_state->board_size * gr_state->board_size;
+
+			int temp = MAX_CHAR;
+			if (temp > 9)
+			{
+				temp -= 9;
+				temp *= 2;
+				temp += 8;
+			}
+			MAX_CHAR--;
+			MAX_CHAR += temp;
+
+			if (puzzle_str != NULL)
+				free(puzzle_str);
+
+			puzzle_str = malloc(sizeof(char) * (MAX_CHAR + 1));
+			letter_count = MAX_CHAR;
+
+			int index = 0;
+			for (int i = 0; i < gr_state->board_size; i++)
+			{
+				for (int j = 0; j < gr_state->board_size; j++)
+				{
+					if (cur_state->board[i][j] == 0)
+						puzzle_str[index++] = '0';
+					else
+					{
+						char *buf = int_to_ascii(cur_state->board[i][j]);
+
+						int k;
+						for (k = 0; k < strlen(buf); k++)
+							puzzle_str[index + k] = buf[k];
+
+						index += k;
+					}
+					puzzle_str[index++] = ' ';
+				}
+			}
+			puzzle_str[MAX_CHAR] = '\0';
+
+			destroyfunc(cur_state);
+
+			temp = gr_state->board_size;
+
+			gr_state->move_list = NULL;
+			free_gra_state(gr_state);
+			*gr_state_ptr = create_dumy_state();
+
+			(*gr_state_ptr)->board_size = temp;
+
+			cur_state = NULL;
+			*in_menu = true;
+			started = false;
+			auto_play = 0;
+			first_time = true;
+			return;
 		}
 
 		bool procced = false;
@@ -734,24 +813,24 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		}
 
 		// Get Move
-		if(cur_state == NULL || !isGoal(*cur_state))
+		if (cur_state == NULL || !isGoal(*cur_state))
 			cur_state = ListGetNth(gr_state->move_list, 1);
-		else if(gr_state->move_list != NULL)
+		else if (gr_state->move_list != NULL)
 		{
 			ListRemove_nth(gr_state->move_list, 1);
 			freeList(gr_state->move_list);
 			gr_state->move_list = NULL;
 		}
-			
-		if(IsKeyPressed(KEY_A))
+
+		if (IsKeyPressed(KEY_A) && !isGoal(*cur_state))
 			auto_play = !auto_play;
 
-		if(first_time)
+		if (first_time)
 			play = procced;
 		else
 			play = (procced || auto_play);
 
-		//Start Drawing
+		// Start Drawing
 		BeginDrawing();
 
 		// Καθαρισμός, θα τα σχεδιάσουμε όλα από την αρχή
@@ -764,6 +843,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					if (cur_state->board[i][j] != 0)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
+						DrawRectangleLinesEx(temp,5,CYAN);
+
 						char *buf = int_to_ascii(cur_state->board[i][j]);
 						DrawText(
 							buf,
@@ -775,10 +857,10 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 			if (isGoal(*cur_state))
 			{
-				DrawText(
-					"PRESS [ESC] TO EXIT",
-					GetScreenWidth() / 2 - MeasureText("PRESS [ESC] TO EXIT", 40) / 2,
-					GetScreenHeight() / 2 - 70, 40, RED);
+				// DrawText(
+				// 	"PRESS [ESC] TO EXIT",
+				// 	GetScreenWidth() / 2 - MeasureText("PRESS [ESC] TO EXIT", 40) / 2,
+				// 	GetScreenHeight() / 2 - 70, 40, RED);
 
 				if (first_end)
 				{
@@ -790,18 +872,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			{
 				if (procced)
 					first_time = false;
-			}
-			else
-			{
-				DrawText(
-					"PRESS [ENTER] TO PROCEED",
-					20, 20,
-					20, BLUE);
-
-				DrawText(
-					"PRESS [A] TO ENABLE AUTO-PLAY",
-					GetScreenWidth() - MeasureText("PRESS [A] TO ENABLE AUTO-PLAY", 20) - 20,
-					20, 20, BLUE);
 			}
 		}
 		else
@@ -820,6 +890,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 						if (cur_state->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+							Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
+							DrawRectangleLinesEx(temp,5,CYAN);
+
 							char *buf = int_to_ascii(cur_state->board[i][j]);
 							DrawText(
 								buf,
@@ -841,6 +914,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 						if (cur_state->board[i][j] != 0)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+							Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
+							DrawRectangleLinesEx(temp,5,CYAN);
+							
 							char *buf = int_to_ascii(cur_state->board[i][j]);
 							DrawText(
 								buf,
@@ -880,7 +956,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		DrawRectangleLines(max_bar.x, max_bar.y, max_bar.width, max_bar.height, BLACK);
 		DrawRectangle(max_bar.x + 2, max_bar.y + 2, bar_width, max_bar.height - 4, CYAN);
 
-		if(mouseOnBack)
+		if (mouseOnBack)
 			DrawRectangleRec(back_button, DARKGRAY);
 		else
 			DrawRectangleRec(back_button, GRAY);
@@ -888,27 +964,51 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		DrawRectangleLines((int)back_button.x, (int)back_button.y, (int)back_button.width, (int)back_button.height, DARKGRAY);
 		DrawText("BACK", (int)back_button.x + ((int)back_button.width) / 2 - MeasureText("BACK", 40) / 2, (int)back_button.y + ((int)back_button.height) / 2 - 20, 40, RAYWHITE);
 
-		if(first_end == true && !mouseOnProcced && !auto_play)
+		if (first_end == true && !mouseOnProcced && (!auto_play || first_time))
 			DrawRectangleRec(procced_button, CYAN);
-		else if(first_end == true && mouseOnProcced && !auto_play)
+		else if (first_end == true && mouseOnProcced && (!auto_play || first_time))
 			DrawRectangleRec(procced_button, LIGHTCYAN);
 		else
 			DrawRectangleRec(procced_button, GRAY);
 
 		DrawRectangleLines((int)procced_button.x, (int)procced_button.y, (int)procced_button.width, (int)procced_button.height, DARKGRAY);
-		
+
 		char *procced_text = "PROCCED";
 		char *start_text = "START";
 		char *buf;
-		if(first_time)
+		if (first_time)
 			buf = start_text;
 		else
 			buf = procced_text;
 
 		DrawText(buf, (int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText(buf, 40) / 2, (int)procced_button.y + ((int)procced_button.height) / 2 - 20, 40, RAYWHITE);
 
-		if(!auto_play)
-			DrawText("Press Enter to Procced",(int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText("Press Enter to Procced", 20) / 2, (int)procced_button.y + ((int)procced_button.height) + 5 , 20, DARKGRAY);
+		if (!auto_play && !first_time)
+			DrawText("Press Enter to Procced", (int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText("Press Enter to Procced", 20) / 2, (int)procced_button.y + ((int)procced_button.height) + 5, 20, DARKGRAY);
+
+		char *auto_trigger = "AUTO";
+		char *man_trigger = "MANUAL";
+		Color auto_color = GREEN;
+		Color man_color = RED;
+		Color buf_color;
+
+		if (auto_play)
+		{
+			buf = auto_trigger;
+			buf_color = auto_color;
+		}
+		else
+		{
+			buf = man_trigger;
+			buf_color = man_color;
+		}
+
+		float trigger_text_y = max_bar.y + max_bar.height + 60;
+		float trigger_text_x = (GetScreenWidth() - PUZZLE_WIDTH) / 2 - MeasureText("TRIGGER: ", 35) / 2 - MeasureText(buf, 35) / 2;
+
+		DrawText("TRIGGER: ", trigger_text_x, trigger_text_y, 35, CYAN);
+		DrawText(buf, trigger_text_x + MeasureText("TRIGGER: ", 35), trigger_text_y, 35, buf_color);
+		DrawText("Press \"A\" to toggle Auto Play", (GetScreenWidth() - PUZZLE_WIDTH) / 2 - MeasureText("Press \"A\" to toggle Auto Play", 20) / 2, trigger_text_y + 35 + 5, 20, GRAY);
 
 		EndDrawing();
 	}
@@ -917,21 +1017,21 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		Rectangle back_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (170 / 2), SCREEN_HEIGHT - 30 - 50, 170, 60};
 
 		// Updating
-		if(gr_state->trans.in_transition == false && !isGoal(*cur_state))
+		if (gr_state->trans.in_transition == false && !isGoal(*cur_state))
 		{
 			int next_blank_row = cur_state->blank_row;
 			int next_blank_col = cur_state->blank_col;
 
-			if(IsKeyPressed(KEY_UP) && cur_state->blank_row + 1 < gr_state->board_size)
+			if (IsKeyPressed(KEY_UP) && cur_state->blank_row + 1 < gr_state->board_size)
 				next_blank_row++;
-			else if(IsKeyPressed(KEY_DOWN) && cur_state->blank_row - 1 >= 0)
+			else if (IsKeyPressed(KEY_DOWN) && cur_state->blank_row - 1 >= 0)
 				next_blank_row--;
-			else if(IsKeyPressed(KEY_LEFT) && cur_state->blank_col + 1 < gr_state->board_size)
+			else if (IsKeyPressed(KEY_LEFT) && cur_state->blank_col + 1 < gr_state->board_size)
 				next_blank_col++;
-			else if(IsKeyPressed(KEY_RIGHT) && cur_state->blank_col - 1 >= 0)
+			else if (IsKeyPressed(KEY_RIGHT) && cur_state->blank_col - 1 >= 0)
 				next_blank_col--;
 
-			if(next_blank_col != cur_state->blank_col || next_blank_row != cur_state->blank_row)
+			if (next_blank_col != cur_state->blank_col || next_blank_row != cur_state->blank_row)
 			{
 				manual_next_state = CopyState(cur_state);
 
@@ -975,11 +1075,11 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			{
 				for (int j = 0; j < gr_state->board_size; j++)
 				{
-					if(cur_state->board[i][j] == 0)
+					if (cur_state->board[i][j] == 0)
 						puzzle_str[index++] = '0';
 					else
 					{
-						char* buf = int_to_ascii(cur_state->board[i][j]);
+						char *buf = int_to_ascii(cur_state->board[i][j]);
 
 						int k;
 						for (k = 0; k < strlen(buf); k++)
@@ -1022,6 +1122,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					if (drawn_state->board[i][j] != 0)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
+						DrawRectangleLinesEx(temp,5,CYAN);
+
 						char *buf = int_to_ascii(drawn_state->board[i][j]);
 						DrawText(
 							buf,
@@ -1031,7 +1134,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 						free(buf);
 					}
 		}
-		else if(gr_state->trans.in_transition == true)
+		else if (gr_state->trans.in_transition == true)
 		{
 			float off_row = gr_state->trans.offset_row * (gr_state->edge / ANIMATION_SPEED);
 			float off_col = gr_state->trans.offset_col * (gr_state->edge / ANIMATION_SPEED);
@@ -1039,18 +1142,21 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			gr_state->positions[manual_next_state->blank_row][manual_next_state->blank_col].y += off_row;
 
 			for (int i = 0; i < gr_state->board_size; i++)
-					for (int j = 0; j < gr_state->board_size; j++)
-						if (drawn_state->board[i][j] != 0)
-						{
-							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
-							char *buf = int_to_ascii(drawn_state->board[i][j]);
-							DrawText(
-								buf,
-								gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
-								gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
-								(int)(gr_state->edge / 2), CYAN);
-							free(buf);
-						}
+				for (int j = 0; j < gr_state->board_size; j++)
+					if (drawn_state->board[i][j] != 0)
+					{
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
+						DrawRectangleLinesEx(temp,5,CYAN);
+
+						char *buf = int_to_ascii(drawn_state->board[i][j]);
+						DrawText(
+							buf,
+							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+							gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+							(int)(gr_state->edge / 2), CYAN);
+						free(buf);
+					}
 
 			point blank_next = gr_state->positions[manual_next_state->blank_row][manual_next_state->blank_col];
 			point blank_prev = gr_state->positions[cur_state->blank_row][cur_state->blank_col];
@@ -1068,7 +1174,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				free(cur_state);
 				cur_state = manual_next_state;
 				manual_next_state = NULL;
-			}	
+			}
 		}
 
 		// Draw the side panel
@@ -1080,14 +1186,16 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		// Show the number of moves
 		DrawText(TextFormat("MOVES: %2d", moves), side_panel.x + side_panel.width / 2 - MeasureText(TextFormat("MOVES: %2d", moves), 40) / 2, side_panel.y + 50, 40, CYAN);
 
-		if(mouseOnBack)
+		DrawText("Use the Arrow keys",side_panel.x + side_panel.width / 2 - MeasureText("Use the Arrow keys", 30) / 2, side_panel.height / 2 - 35, 30, DARKGRAY);
+		DrawText("to solve the puzzle.",side_panel.x + side_panel.width / 2 - MeasureText("to solve the puzzle.", 30) / 2, side_panel.height / 2 + 5, 30, DARKGRAY);
+
+		if (mouseOnBack)
 			DrawRectangleRec(back_button, DARKGRAY);
 		else
 			DrawRectangleRec(back_button, GRAY);
 
 		DrawRectangleLines((int)back_button.x, (int)back_button.y, (int)back_button.width, (int)back_button.height, DARKGRAY);
 		DrawText("BACK", (int)back_button.x + ((int)back_button.width) / 2 - MeasureText("BACK", 40) / 2, (int)back_button.y + ((int)back_button.height) / 2 - 20, 40, RAYWHITE);
-
 
 		EndDrawing();
 	}

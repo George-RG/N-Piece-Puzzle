@@ -8,6 +8,8 @@
 
 #include "ai_solver.h"
 
+bool DEBUG = false;
+
 void evaluate(State *state);
 State* CopyState(State* cur_state);
 ListPtr ReturnSolution(State* state);
@@ -42,7 +44,7 @@ void* solve_new(void* arg)
 
     while(min != 0)
     {    
-        if(min != INT_MAX)
+        if(min != INT_MAX && DEBUG)
             printf("Current estimated min moves:%d\n",min);
         
         min = solver_helper(state, Bound, Visited, &final);
@@ -56,7 +58,8 @@ void* solve_new(void* arg)
 
     RB_Destroy(Visited);
 
-    printf("Time taken: %f\n",datetime_diff_s);
+    if(DEBUG)
+        printf("Time taken: %f\n",datetime_diff_s);
 
     *(test->result) = move_list;
 

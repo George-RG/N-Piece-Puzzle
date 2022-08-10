@@ -13,7 +13,7 @@ There is 1 very simple rule.The player can transfer to the missing spot any tile
 The player must move the tiles to order them in decending order (1 int the top left corner) leaving the blank spot last on the bottom right corner
 
 ## The solver
-The program uses the [A* search algorithm](https://en.wikipedia.org/wiki/A*_search_algorithm) to navigate from the given state of the game to the goal. In 3 simple steps:
+The program uses the [IDA* search algorithm](https://en.wikipedia.org/wiki/Iterative_deepening_A*) to navigate from the given state of the game to the goal. In 3 simple steps:
 
 - Expand from the current state(find all the possible stated after this)
 - Evaluate all the new states
