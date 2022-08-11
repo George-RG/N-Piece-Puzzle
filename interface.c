@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
 
 #define CYAN \
 	(Color) { 0, 145, 143, 255 } // Cyan
@@ -21,7 +22,8 @@ typedef enum play_mode
 {
 	NONE,
 	AUTO,
-	MANUAL
+	MANUAL,
+	SHUFFLE
 } play_mode;
 
 char *int_to_ascii(int num);
@@ -64,6 +66,11 @@ bool play = false;
 // Manual Globals
 State *manual_next_state = NULL;
 
+// SHUFFLE globals
+int rand_moves;
+State *rand_next_state = NULL;
+Move last = 10;
+
 void interface_init()
 {
 	// Αρχικοποίηση του παραθύρου
@@ -92,14 +99,14 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 	{
 		if (started == true && gr_state->move_list == NULL)
 		{
-			if (atoi(size_str) < 2 || atoi(size_str) > 5)
+			int N = atoi(size_str);
+
+			if (N < 2 || N > 5)
 			{
 				printf("Invalid size.\n");
 				started = false;
 				return;
 			}
-
-			int N = atoi(size_str);
 
 			free_gra_state(gr_state);
 
@@ -331,6 +338,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
 		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 450, 200, 140};
 		Rectangle exitBox = (Rectangle){SCREEN_WIDTH - 30 - 170, SCREEN_HEIGHT - 30 - 50, 170, 60};
+		Rectangle shuffleBox = (Rectangle){GetScreenWidth() / 2 - MeasureText("Shuffle", 30) / 2 - 10, textBox.y + textBox.height + 40, MeasureText("Shuffle", 30) + 20, 40};
 
 		// Text box triggers
 		bool mouseOnText = false;
@@ -341,6 +349,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		bool mouseOnMan = false;
 		bool mouseOnExit = false;
 		bool mouseOnStart = false;
+		bool mouseOnShuffle = false;
 		bool mouseOnPaste = false;
 		bool clickedPaste = false;
 		bool mouseOnCopy = false;
@@ -508,6 +517,66 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			else
 				mouseOnExit = false;
 
+			mouseOnShuffle = CheckCollisionPointRec(GetMousePosition(), shuffleBox);
+
+			if ((CheckCollisionPointRec(GetMousePosition(), shuffleBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) && size_str[0] != '\0')
+			{
+				cur_mode = SHUFFLE;
+				*in_menu = false;
+				
+				int N = atoi(size_str);
+
+				if (N < 2 || N > 5)
+				{
+					printf("Invalid size.\n");
+					cur_mode = NONE;
+					*in_menu = true;
+					return;
+				}
+
+				// Create PUzzle to shuffle
+				if (puzzle_str != NULL)
+				{
+					free(puzzle_str);
+					puzzle_str = NULL;
+					letter_count = 0;
+				}
+
+				free_gra_state(gr_state);
+
+				*gr_state_ptr = create_gra_state(N);
+				gr_state = *gr_state_ptr;
+
+				cur_state = malloc(sizeof(State));
+				cur_state->board = malloc(sizeof(int *) * N);
+				for (int i = 0; i < N; i++)
+					cur_state->board[i] = malloc(sizeof(int) * N);
+				cur_state->representation = NULL;
+				cur_state->moves = 0;
+				cur_state->parent = NULL;
+				cur_state->size = N;
+
+				int i = 1;
+				for(int row = 0; row < N; row++)
+				{
+					for(int col = 0; col < N; col++)
+					{
+						cur_state->board[row][col] = i;
+						i++;
+					}
+				}
+				cur_state->board[N - 1][N - 1] = 0;
+
+				cur_state->blank_col = N - 1;
+				cur_state->blank_row = N - 1;
+
+				// Shuffle the puzzle
+				rand_moves = 0;
+				*in_menu = false;
+				cur_mode = SHUFFLE;
+				srand(time(NULL));
+			}
+
 			if ((CheckCollisionPointRec(GetMousePosition(), enterBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER))
 			{
 				started = true;
@@ -580,10 +649,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, textBox.y + textBox.height + 10, 20, DARKGRAY);
 		else
 			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, textBox.y + textBox.height + 10, 20, MAROON);
-		// TODO
-		// DrawText(TextFormat("PRESS ENTER TO START"), 315, 275, 20, DARKGRAY);
-		// DrawText(TextFormat("PRESS ESC TO EXIT"), 315, 300, 20, DARKGRAY);
-		// DrawText(TextFormat("PRESS A TO TOGGLE AUTOSOVLE"), 315, 325, 20, DARKGRAY);
+
 		DrawText(TextFormat("N-Piece Puzzle"), SCREEN_WIDTH / 2 - MeasureText("N-Piece Puzzle", 70) / 2, 25, 70, CYAN);
 		DrawText(TextFormat("Puzzle Size"), SCREEN_WIDTH / 2 - (MeasureText("Puzzle Size", 30) + 50 + 10) / 2, sizeBox.y + 15, 30, DARKGRAY);
 		DrawText(TextFormat("Current Puzzle"), SCREEN_WIDTH / 2 - MeasureText("Current Puzzle", 30) / 2, textBox.y - 30, 30, DARKGRAY);
@@ -687,7 +753,15 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			DrawRectangleRec(copyBox, CYAN);
 
 		DrawRectangleLines((int)copyBox.x, (int)copyBox.y, (int)copyBox.width, (int)copyBox.height, DARKGRAY);
-		DrawTexture(copy, copyBox.x + copyBox.width/2 - paste.width / 2 , copyBox.y + copyBox.height/2 - paste.height/2, CYAN);
+		DrawTexture(copy, copyBox.x + copyBox.width / 2 - paste.width / 2, copyBox.y + copyBox.height / 2 - paste.height / 2, CYAN);
+
+		if (mouseOnShuffle)
+			DrawRectangleRec(shuffleBox, LIGHTCYAN);
+		else
+			DrawRectangleRec(shuffleBox, CYAN);
+		
+		DrawRectangleLines((int)shuffleBox.x, (int)shuffleBox.y, (int)shuffleBox.width, (int)shuffleBox.height, DARKGRAY);
+		DrawText("Shuffle", (int)shuffleBox.x + ((int)shuffleBox.width) / 2 - MeasureText("Shuffle", 30) / 2, (int)shuffleBox.y + ((int)shuffleBox.height) / 2 - 15, 30, RAYWHITE);
 
 		if (solver_running)
 		{
@@ -850,7 +924,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
-						DrawRectangleLinesEx(temp,5,CYAN);
+						DrawRectangleLinesEx(temp, 5, CYAN);
 
 						char *buf = int_to_ascii(cur_state->board[i][j]);
 						DrawText(
@@ -863,11 +937,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 			if (isGoal(*cur_state))
 			{
-				// DrawText(
-				// 	"PRESS [ESC] TO EXIT",
-				// 	GetScreenWidth() / 2 - MeasureText("PRESS [ESC] TO EXIT", 40) / 2,
-				// 	GetScreenHeight() / 2 - 70, 40, RED);
-
 				if (first_end)
 				{
 					PlaySound(clap);
@@ -897,7 +966,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 							Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
-							DrawRectangleLinesEx(temp,5,CYAN);
+							DrawRectangleLinesEx(temp, 5, CYAN);
 
 							char *buf = int_to_ascii(cur_state->board[i][j]);
 							DrawText(
@@ -921,8 +990,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 						{
 							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 							Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
-							DrawRectangleLinesEx(temp,5,CYAN);
-							
+							DrawRectangleLinesEx(temp, 5, CYAN);
+
 							char *buf = int_to_ascii(cur_state->board[i][j]);
 							DrawText(
 								buf,
@@ -1129,7 +1198,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
-						DrawRectangleLinesEx(temp,5,CYAN);
+						DrawRectangleLinesEx(temp, 5, CYAN);
 
 						char *buf = int_to_ascii(drawn_state->board[i][j]);
 						DrawText(
@@ -1153,7 +1222,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					{
 						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
-						DrawRectangleLinesEx(temp,5,CYAN);
+						DrawRectangleLinesEx(temp, 5, CYAN);
 
 						char *buf = int_to_ascii(drawn_state->board[i][j]);
 						DrawText(
@@ -1192,8 +1261,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		// Show the number of moves
 		DrawText(TextFormat("MOVES: %2d", moves), side_panel.x + side_panel.width / 2 - MeasureText(TextFormat("MOVES: %2d", moves), 40) / 2, side_panel.y + 50, 40, CYAN);
 
-		DrawText("Use the Arrow keys",side_panel.x + side_panel.width / 2 - MeasureText("Use the Arrow keys", 30) / 2, side_panel.height / 2 - 35, 30, DARKGRAY);
-		DrawText("to solve the puzzle.",side_panel.x + side_panel.width / 2 - MeasureText("to solve the puzzle.", 30) / 2, side_panel.height / 2 + 5, 30, DARKGRAY);
+		DrawText("Use the Arrow keys", side_panel.x + side_panel.width / 2 - MeasureText("Use the Arrow keys", 30) / 2, side_panel.height / 2 - 35, 30, DARKGRAY);
+		DrawText("to solve the puzzle.", side_panel.x + side_panel.width / 2 - MeasureText("to solve the puzzle.", 30) / 2, side_panel.height / 2 + 5, 30, DARKGRAY);
 
 		if (mouseOnBack)
 			DrawRectangleRec(back_button, DARKGRAY);
@@ -1203,6 +1272,207 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		DrawRectangleLines((int)back_button.x, (int)back_button.y, (int)back_button.width, (int)back_button.height, DARKGRAY);
 		DrawText("BACK", (int)back_button.x + ((int)back_button.width) / 2 - MeasureText("BACK", 40) / 2, (int)back_button.y + ((int)back_button.height) / 2 - 20, 40, RAYWHITE);
 
+		EndDrawing();
+	}
+	else if (cur_mode == SHUFFLE)
+	{
+		int max_moves = gr_state->board_size * gr_state->board_size * 3;
+		if (rand_moves == max_moves)
+		{
+			int MAX_CHAR = gr_state->board_size * gr_state->board_size;
+
+			int temp = MAX_CHAR;
+			if (temp > 9)
+			{
+				temp -= 9;
+				temp *= 2;
+				temp += 8;
+			}
+			MAX_CHAR--;
+			MAX_CHAR += temp;
+
+			if (puzzle_str != NULL)
+				free(puzzle_str);
+
+			puzzle_str = malloc(sizeof(char) * (MAX_CHAR + 1));
+			letter_count = MAX_CHAR;
+
+			int index = 0;
+			for (int i = 0; i < gr_state->board_size; i++)
+			{
+				for (int j = 0; j < gr_state->board_size; j++)
+				{
+					if (cur_state->board[i][j] == 0)
+						puzzle_str[index++] = '0';
+					else
+					{
+						char *buf = int_to_ascii(cur_state->board[i][j]);
+
+						int k;
+						for (k = 0; k < strlen(buf); k++)
+							puzzle_str[index + k] = buf[k];
+
+						index += k;
+					}
+					puzzle_str[index++] = ' ';
+				}
+			}
+			puzzle_str[MAX_CHAR] = '\0';
+
+			destroyfunc(cur_state);
+
+			temp = gr_state->board_size;
+
+			gr_state->move_list = NULL;
+			free_gra_state(gr_state);
+			*gr_state_ptr = create_dumy_state();
+
+			(*gr_state_ptr)->board_size = temp;
+
+			cur_state = NULL;
+			*in_menu = true;
+			cur_mode = NONE;
+			return;
+		}
+
+		if (gr_state->trans.in_transition == false && rand_moves < max_moves)
+		{
+			int next_blank_row = cur_state->blank_row;
+			int next_blank_col = cur_state->blank_col;
+
+			int N = gr_state->board_size;
+
+			int direction = rand() % 4;
+
+			switch (direction)
+			{
+				case UP:
+					if(next_blank_row - 1 >= 0 && last != DOWN)
+					{	
+						next_blank_row--;
+						last = UP;	
+					}
+					break;
+
+				case DOWN:
+					if(next_blank_row + 1 < N && last != UP)
+					{
+						next_blank_row++;
+						last = DOWN;
+					}
+					break;
+
+				case LEFT:
+					if(next_blank_col - 1 >= 0 && last != RIGHT)
+					{
+						next_blank_col--;
+						last = LEFT;
+					}
+					break;
+
+				case RIGHT:
+					if(next_blank_col + 1 < N && last != LEFT)
+					{
+						next_blank_col++;
+						last = RIGHT;
+					}
+					break;
+
+				default:
+					break;
+			}
+
+			if (next_blank_col != cur_state->blank_col || next_blank_row != cur_state->blank_row)
+			{
+				rand_next_state = CopyState(cur_state);
+
+				rand_next_state->board[cur_state->blank_row][cur_state->blank_col] = rand_next_state->board[next_blank_row][next_blank_col];
+				rand_next_state->board[next_blank_row][next_blank_col] = 0;
+
+				rand_next_state->blank_row = next_blank_row;
+				rand_next_state->blank_col = next_blank_col;
+
+				gr_state->trans.in_transition = true;
+				gr_state->trans.offset_row = cur_state->blank_row - rand_next_state->blank_row;
+				gr_state->trans.offset_col = cur_state->blank_col - rand_next_state->blank_col;
+
+				rand_moves++;
+			}
+		}
+
+		// Drawing move
+		BeginDrawing();
+
+		ClearBackground(DARKGRAY);
+
+		if (gr_state->trans.in_transition == false)
+		{
+			for (int i = 0; i < gr_state->board_size; i++)
+				for (int j = 0; j < gr_state->board_size; j++)
+					if (cur_state->board[i][j] != 0)
+					{
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
+						DrawRectangleLinesEx(temp, 5, CYAN);
+
+						char *buf = int_to_ascii(cur_state->board[i][j]);
+						DrawText(
+							buf,
+							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+							gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+							(int)(gr_state->edge / 2), CYAN);
+						free(buf);
+					}
+		}
+		else if (gr_state->trans.in_transition == true)
+		{
+			float off_row = gr_state->trans.offset_row * (gr_state->edge / (ANIMATION_SPEED / 2));
+			float off_col = gr_state->trans.offset_col * (gr_state->edge / (ANIMATION_SPEED / 2));
+			gr_state->positions[rand_next_state->blank_row][rand_next_state->blank_col].x += off_col;
+			gr_state->positions[rand_next_state->blank_row][rand_next_state->blank_col].y += off_row;
+
+			for (int i = 0; i < gr_state->board_size; i++)
+				for (int j = 0; j < gr_state->board_size; j++)
+					if (cur_state->board[i][j] != 0)
+					{
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
+						DrawRectangleLinesEx(temp, 5, CYAN);
+
+						char *buf = int_to_ascii(cur_state->board[i][j]);
+						DrawText(
+							buf,
+							gr_state->positions[i][j].x + gr_state->edge / 2 - MeasureText(buf, (int)(gr_state->edge / 2)) / 2,
+							gr_state->positions[i][j].y + gr_state->edge / 2 - 50,
+							(int)(gr_state->edge / 2), CYAN);
+						free(buf);
+					}
+
+			point blank_next = gr_state->positions[rand_next_state->blank_row][rand_next_state->blank_col];
+			point blank_prev = gr_state->positions[cur_state->blank_row][cur_state->blank_col];
+
+			if (blank_next.x == blank_prev.x && blank_next.y == blank_prev.y)
+			{
+				moves++;
+				gr_state->trans.in_transition = false;
+
+				off_row = gr_state->trans.offset_row * gr_state->edge;
+				off_col = gr_state->trans.offset_col * gr_state->edge;
+				gr_state->positions[rand_next_state->blank_row][rand_next_state->blank_col].x -= off_col;
+				gr_state->positions[rand_next_state->blank_row][rand_next_state->blank_col].y -= off_row;
+
+				free(cur_state);
+				cur_state = rand_next_state;
+				rand_next_state = NULL;
+			}
+		}
+
+		// Draw the side panel
+		Rectangle side_panel = {0, 0, SCREEN_WIDTH - PUZZLE_WIDTH, SCREEN_HEIGHT};
+		DrawRectangleRec(side_panel, LLGRAY);
+		DrawRectangleLinesEx(side_panel, 15, CYAN);
+		DrawRectangleLinesEx(side_panel, 7, DARKGRAY);
+	
 		EndDrawing();
 	}
 }
