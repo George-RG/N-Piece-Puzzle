@@ -13,11 +13,13 @@ There is 1 very simple rule.The player can transfer to the missing spot any tile
 The player must move the tiles to order them in decending order (1 int the top left corner) leaving the blank spot last on the bottom right corner
 
 ## The solver
-The program uses the [IDA* search algorithm](https://en.wikipedia.org/wiki/Iterative_deepening_A*) to navigate from the given state of the game to the goal. In 3 simple steps:
+The program uses the [IDA* search algorithm](https://en.wikipedia.org/wiki/Iterative_deepening_A*) to navigate from the given state of the game to the goal. In 5 simple steps:
 
-- Expand from the current state(find all the possible stated after this)
-- Evaluate all the new states
-- Choose the state with the highest evaluation and set it as current
+- Evaluate current state and set its evaluation as the worst.
+- Find a child state with better evaluation than the parent state.
+- If found then procced with that branch of the tree.
+- Else change the worst with the best of the children evaluations.
+- Start from the current state again with the new worst evaluation. 
   
 ## The graphical enviroment
 For the graphics the program uses a library called [Raylib](https://www.raylib.com/). The program can adapt to any board size since it creates all the not-repeating sprites in real time.
