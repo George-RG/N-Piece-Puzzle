@@ -35,12 +35,42 @@ For the graphics the program uses a library called [Raylib](https://www.raylib.c
 
 
 - Run the program
-    1. Type `./game "Edge"` where the edge is the edge of the board.
-    2. Type row by row the numbers of the tiles in the starting board. 
-    3. Choose Auto or Manual progression
+    1. Type `./game`.
+
    
 ## User Interface
--   ***Start*** the solving with the __ENTER__
--   ***Toggle*** auto solving on/off with  __A__
--   In Manual mode ***procced*** to the next move with __ENTER__
--   When the solving is done ***exit*** with the key __ESC__
+
+### Menu screen 
+On the menu screen you will be asked to choose the following:
+- **Size** or in other words the edge of the square puzzle.
+- The **Current puzzle** that the game will start on.
+- **Solving Mode** that can be either **auto** or **manual**.
+
+> The puzzle must be entered using a spesific format. That is seperating every tile with a **space**.
+> Example for a puzzle of size 4: `6 4 11 0 7 1 3 2 13 5 9 8 10 14 15 12`
+
+On the same window you will find some buttons to help you:
+- A **Copy** button that will copy the current puzzle text-box to your clipboard.(Ctrl+C)
+- A **Paste** button that will paste your clipboard to the current puzzle textbox.(Ctrl+V)
+- The **Start** button to start the puzzle (or use the **enter** key).
+- **Exit** button that will close the game
+- **Shuffle** button that will create a random puzzle for you to solve.
+
+>For the **suffle** to work you first need to set the size of the puzzle.
+
+### Auto Mode
+When in auto mode:
+- Press **[A]** to toggle between automatic procceding or manual.
+- Press **[ENTER]** to Start/Procced the solution.
+- Hit the **Back** to go back to the main menu and **carry the current state of the puzzle** with you.
+  
+### Manual Mode
+When in manual mode:
+- Use the **Arrow Keys** to solve the puzzle.
+- Hit the **Back** to go back to the main menu and **carry the current state of the puzzle** with you.
+
+> **When the puzzle is solved** the only thing you can do in both modes is press the back button
+
+
+## Known bugs
+- Some times the algorithm will mark a solvable puzzle as unsolvable.
