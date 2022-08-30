@@ -4,7 +4,7 @@ INCLUDE = ./include
 INCLUDE2 = ./include/raylib
 MODULES = ./modules
 
-DEBUG = true
+DEBUG = false
 
 MY_OS = linux
 

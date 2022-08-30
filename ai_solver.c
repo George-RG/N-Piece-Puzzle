@@ -8,7 +8,7 @@
 
 #include "ai_solver.h"
 
-bool DEBUG = false;
+bool DEBUG = true;
 
 void evaluate(State *state);
 State* CopyState(State* cur_state);

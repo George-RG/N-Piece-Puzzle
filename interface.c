@@ -794,7 +794,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			Rectangle rec = (Rectangle){0, 0, GetScreenWidth(), GetScreenHeight()};
 			DrawRectangleRec(rec, TRANSPARENT_BLACK);
 
-			DrawText(solver_str, SCREEN_WIDTH / 2 - MeasureText(solver_str, 30) / 2, SCREEN_HEIGHT / 2 - 30, 30, RAYWHITE);
+			DrawText(solver_str, SCREEN_WIDTH / 2 - MeasureText(final_str, 30) / 2, SCREEN_HEIGHT / 2 - 30, 30, RAYWHITE);
 
 			if (gr_state->move_list != NULL)
 			{
@@ -883,6 +883,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			started = false;
 			auto_play = 0;
 			first_time = true;
+			first_end = true;
 			return;
 		}
 
