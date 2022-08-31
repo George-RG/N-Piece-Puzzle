@@ -1,3 +1,7 @@
+# Set the windows path you want to move the game inorder to run it (use /mnt/ befor the path so you can access you disk)
+WIN_PATH = /mnt/c/Users/Georg/Desktop/
+EXEC = game
+
 # paths
 LIB = ./lib
 INCLUDE = ./include
@@ -7,6 +11,7 @@ MODULES = ./modules
 DEBUG = false
 
 MY_OS = linux
+MOVE = YES
 
 #Program args
 ARGS = 3
@@ -20,8 +25,6 @@ LDFLAGS = -lm
 
 objects= game.o interface.o List.o RB.o PQ.o ai_solver.o $(LIB)/libraylib.a
 
-EXEC = game
-
 ifeq ($(DEBUG),true)
 	CFLAGS += -g3 -O0
 else
@@ -31,14 +34,17 @@ endif
 ifeq ($(MY_OS),win)
 	LDFLAGS += -lgdi32 -lwinmm -lopengl32 -lpthread
 	CC = x86_64-w64-mingw32-gcc
+	
+	Exec += .exe
 else ifeq ($(MY_OS),linux)
 	LDFLAGS += -ldl -lpthread -lGL
+
+	MOVE = FALSE 
 endif
 
 $(EXEC):$(objects)
 	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-#mv $(EXEC) /mnt/c/Users/Georg/Desktop/
-#rm -f $(EXEC)
+	mv $(EXEC) /mnt/c/Users/Georg/Desktop/
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
