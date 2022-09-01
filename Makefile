@@ -1,29 +1,42 @@
 # Set the windows path you want to move the game inorder to run it (use /mnt/ befor the path so you can access you disk)
 WIN_PATH = /mnt/c/Users/Georg/Desktop/
+
+# Set the name of the output
 EXEC = game
 
 # paths
 LIB = ./lib
-INCLUDE = ./include
-INCLUDE2 = ./include/raylib
-MODULES = ./modules
-
-DEBUG = false
-
-MY_OS = linux
-MOVE = YES
+INCLUDE = ./include  -I ./include/raylib
+SRC = ./src
+BUILD = ./build
 
 #Program args
 ARGS = 3
 
-#compiler
+#Default compiler
 CC = gcc
 
+#Debug mode
+DEBUG = false
+
+#Exta object files
+EXTRA := $(LIB)/libraylib.a
+
+
+################################### DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING ###################################
+
+
+# Makefile options
+PLATFORM = linux
+MOVE = YES
+
 #compiler options
-CFLAGS = -Wall -Werror -I$(INCLUDE) -I$(INCLUDE2) -std=c99
+CFLAGS = -Wall -Werror -I$(INCLUDE) -std=c99
 LDFLAGS = -lm
 
-objects= game.o interface.o List.o RB.o PQ.o ai_solver.o $(LIB)/libraylib.a
+SRCS := $(shell find $(SRC) -name '*.c')
+OBJS = $(SRCS:$(SRC)/%.c=$(SRC)/%.o)
+OBJPATH := $(addprefix $(BUILD)/,$(notdir $(OBJS)))
 
 ifeq ($(DEBUG),true)
 	CFLAGS += -g3 -O0
@@ -31,50 +44,38 @@ else
 	CFLAGS += -O3
 endif
 
-ifeq ($(MY_OS),win)
+ifeq ($(PLATFORM),win)
 	LDFLAGS += -lgdi32 -lwinmm -lopengl32 -lpthread
 	CC = x86_64-w64-mingw32-gcc
 	
 	Exec += .exe
-else ifeq ($(MY_OS),linux)
+else ifeq ($(PLATFORM),linux)
 	LDFLAGS += -ldl -lpthread -lGL
 
 	MOVE = FALSE 
+else ifeq ($(PLATFORM),web)
+	LDFLAGS += -lm -lGL
+	
+
 endif
 
-$(EXEC):$(objects)
-	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-	mv $(EXEC) /mnt/c/Users/Georg/Desktop/
+$(SRC)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ && mv $@ $(BUILD) 
+
+$(MODULES)/%.o: $(MODULES)/%.c
+	cd $(BUILD) && $(CC) $(CFLAGS) -c $< -o $@
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
 $(LIB)/%.a:
-	$(MAKE) -C $(LIB) $*.a SUFFIX=$(MY_OS)
+	$(MAKE) -C $(LIB) $*.a SUFFIX=$(PLATFORM)
 
-#For compiling the ADTs
-List.o :
-	$(CC) -c $(MODULES)/List.c $(LDFLAGS) $(CFLAGS)
-
-RB.o :
-	$(CC) -c $(MODULES)/RB.c $(LDFLAGS) $(CFLAGS)
-
-PQ.o :
-	$(CC) -c $(MODULES)/PQ.c $(LDFLAGS) $(CFLAGS)
-
-game.o :
-	$(CC) -c game.c $(LDFLAGS) $(CFLAGS)
-
-ai_solver.o :
-	$(CC) -c ai_solver.c $(LDFLAGS) $(CFLAGS)
-
-interface.o :
-	$(CC) -c interface.c $(LDFLAGS) $(CFLAGS)
-
+$(EXEC):$(OBJS) $(EXTRA)
+	$(CC) $(OBJPATH) $(EXTRA) -o $(EXEC) $(LDFLAGS)
+#mv $(EXEC) /mnt/c/Users/Georg/Desktop/
 
 #Cleaning
 PHONY clean:
-	rm -f $(objects) $(EXEC)
-#cd /mnt/c/Users/Georg/Desktop/ 
-#rm -f $(EXEC)
+	rm -f $(BUILD)/*.o $(EXEC) $(EXTRA) $(EXEC).exe
 
 valgrind: $(EXEC)
 	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)
