@@ -50,16 +50,17 @@ else
 endif
 
 ifeq ($(PLATFORM),win)
-	LDFLAGS += -lgdi32 -lwinmm -lopengl32 -lpthread
+	LDFLAGS += -Llib/windows -lraylib -lopengl32 -lgdi32 -lwinmm -lpthread
 	CC = x86_64-w64-mingw32-gcc
 	CCPP = x86_64-w64-mingw32-g++
 	
 	EXEC :=$(EXEC).exe
 else ifeq ($(PLATFORM),linux)
-	LDFLAGS += -ldl -lpthread -lGL
+	LDFLAGS += -Llib/linux -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 
 	WIN_PATH = ./
 else ifeq ($(PLATFORM),web)
+
 	LDFLAGS += -lm -lGL	
 endif
 
@@ -74,7 +75,7 @@ $(LIB)/%.a:
 	$(MAKE) -C $(LIB) $*.a SUFFIX=$(PLATFORM)
 
 $(EXEC):$(OBJS) $(OBJS_CPP) $(EXTRA)
-	$(CC) $(OBJPATH) $(OBJPATH_CPP) $(EXTRA) -o $(EXEC) $(LDFLAGS)
+	$(CCPP) $(OBJPATH) $(OBJPATH_CPP) $(EXTRA) -o $(EXEC) $(LDFLAGS)
 	-mv $(EXEC) $(WIN_PATH)
 
 #Cleaning
