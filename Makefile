@@ -5,7 +5,7 @@ WIN_PATH := /mnt/c/Users/Georg/Desktop/
 EXEC := game
 
 # paths
-LIB := ./lib
+LIB := libs
 INCLUDE := ./include  -I ./include/raylib
 SRC := ./src
 BUILD := ./build
@@ -14,76 +14,91 @@ BUILD := ./build
 ARGS := 3
 
 #Default compiler
-CC = gcc
-CCPP = g++
+CC := gcc
+CXX := g++
 
 #Debug mode
 DEBUG := false
 
-#Exta object files
-EXTRA := $(LIB)/libraylib.a
+#Exta libs
+LIBS := -lraylib
+EXTRA :=
+
+#For web emcc path
+EMCC_PATH := /home/george/Downloads/emsdk/
 
 
 ################################### DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING ###################################
 
 
 # Makefile options
-PLATFORM = linux
+PLATFORM = LINUX
 
 #compiler options
 CFLAGS = -Wall -Werror -I$(INCLUDE)
-CPPFLAGS = -I$(INCLUDE)
+CXXFLAGS = -I$(INCLUDE)
 LDFLAGS = -lm
 
 SRCS := $(shell find $(SRC) -name '*.c')
 OBJS := $(SRCS:$(SRC)/%.c=$(SRC)/%.o)
 OBJPATH := $(addprefix $(BUILD)/,$(notdir $(OBJS)))
 
-SRCS_CPP := $(shell find $(SRC) -name '*.cpp')
-OBJS_CPP := $(SRCS_CPP:$(SRC)/%.cpp=$(SRC)/%.opp)
-OBJPATH_CPP := $(addprefix $(BUILD)/,$(notdir $(OBJS_CPP)))
+SRCS_CXX := $(shell find $(SRC) -name '*.cpp')
+OBJS_CXX := $(SRCS_CXX:$(SRC)/%.cpp=$(SRC)/%.opp)
+OBJPATH_CXX := $(addprefix $(BUILD)/,$(notdir $(OBJS_CXX)))
 
 ifeq ($(DEBUG),true)
-	CFLAGS += -g3 -O0
+	CFLAGS += -g3
 else
 	CFLAGS += -O3
 endif
 
-ifeq ($(PLATFORM),win)
-	LDFLAGS += -Llib/windows -lraylib -lopengl32 -lgdi32 -lwinmm -lpthread
+ifeq ($(PLATFORM),WIN)
+	LDFLAGS += -L$(LIB)/windows -lopengl32 -lgdi32 -lwinmm -lpthread $(LIBS)
 	CC = x86_64-w64-mingw32-gcc
-	CCPP = x86_64-w64-mingw32-g++
-	
+	CXX = x86_64-w64-mingw32-g++
+
 	EXEC :=$(EXEC).exe
-else ifeq ($(PLATFORM),linux)
-	LDFLAGS += -Llib/linux -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+else ifeq ($(PLATFORM),LINUX)
+	LDFLAGS += -L$(LIB)/linux -lGL -lm -lpthread -ldl -lrt -lX11 $(LIBS)
 
 	WIN_PATH = ./
-else ifeq ($(PLATFORM),web)
+else ifeq ($(PLATFORM),WEB)
+	LDFLAGS += -L$(LIB)/web -lGL	-lpthread -ldl -lrt -lX11 $(LIBS)
 
-	LDFLAGS += -lm -lGL	
+	OBJS := EMCC $(OBJS)
+
+	SHELL := /bin/bash
+	CC := emcc
+	CXX := emcc
 endif
 
 $(SRC)/%.opp: $(SRC)/%.cpp
-	$(CCPP) $(CPPFLAGS) -c $< -o $@ && mv $@ $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ && mv $@ $(BUILD)
 
 $(SRC)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ && mv $@ $(BUILD) 
 
 # Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
-$(LIB)/%.a:
-	$(MAKE) -C $(LIB) $*.a SUFFIX=$(PLATFORM)
+# $(LIB)/%.a:
+# 	$(MAKE) -C $(LIB) $*.a SUFFIX=$(PLATFORM)
 
-$(EXEC):$(OBJS) $(OBJS_CPP) $(EXTRA)
-	$(CCPP) $(OBJPATH) $(OBJPATH_CPP) $(EXTRA) -o $(EXEC) $(LDFLAGS)
+$(EXEC):$(OBJS) $(OBJS_CXX) $(EXTRA)
+	$(CXX) $(OBJPATH) $(OBJPATH_CXX) $(EXTRA) -o $(EXEC) $(LDFLAGS)
 	-mv $(EXEC) $(WIN_PATH)
+
+EMCC:
+	$(EMCC_PATH)/emsdk activate latest
+	source $(EMCC_PATH)/emsdk_env.sh
 
 #Cleaning
 PHONY clean:
 	rm -f $(BUILD)/*.o $(BUILD)/*.opp $(EXEC) $(EXTRA) $(EXEC).exe
 
-# valgrind: $(EXEC)
-# 	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)
+valgrind:
+	$(MAKE) clean
+	$(MAKE) $(EXEC) DEBUG=true
+	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)
 
-# run: $(EXEC)
-# 	./$(EXEC) $(ARGS)
+run: $(EXEC)
+	./$(EXEC) $(ARGS)
