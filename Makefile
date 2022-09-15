@@ -54,7 +54,7 @@ else
 endif
 
 ifeq ($(PLATFORM),WIN)
-	LDFLAGS += -L$(LIB)/windows -lopengl32 -lgdi32 -lwinmm -lpthread $(LIBS)
+	LDFLAGS += -lgdi32 -lwinmm -lopengl32 -lpthread   -L$(LIB)/windows/ $(LIBS) 
 	CC = x86_64-w64-mingw32-gcc
 	CXX = x86_64-w64-mingw32-g++
 
@@ -64,7 +64,7 @@ else ifeq ($(PLATFORM),LINUX)
 
 	WIN_PATH = ./
 else ifeq ($(PLATFORM),WEB)
-	LDFLAGS += -L$(LIB)/web -lGL	-lpthread -ldl -lrt -lX11 $(LIBS)
+	LDFLAGS += -L$(LIB)/web -lGL -lpthread -ldl -lrt -lX11 $(LIBS)
 
 	OBJS := EMCC $(OBJS)
 
