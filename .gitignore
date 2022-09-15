@@ -3,4 +3,6 @@
 *.json
 *.a
 
+.vscode/
+
 vgcore.*
