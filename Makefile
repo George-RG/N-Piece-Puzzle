@@ -54,13 +54,13 @@ else
 endif
 
 ifeq ($(PLATFORM),WIN)
-	LDFLAGS += -lgdi32 -lwinmm -lopengl32 -lpthread   -L$(LIB)/windows/ $(LIBS) 
+	LDFLAGS += -L$(LIB)/windows/ $(LIBS)  -lgdi32 -lwinmm -lopengl32 -lpthread
 	CC = x86_64-w64-mingw32-gcc
 	CXX = x86_64-w64-mingw32-g++
 
 	EXEC :=$(EXEC).exe
 else ifeq ($(PLATFORM),LINUX)
-	LDFLAGS += -L$(LIB)/linux -lGL -lm -lpthread -ldl -lrt -lX11 $(LIBS)
+	LDFLAGS += -L$(LIB)/linux  $(LIBS) -lGL -lpthread -ldl -lrt -lX11
 
 	WIN_PATH = ./
 else ifeq ($(PLATFORM),WEB)
@@ -70,7 +70,7 @@ else ifeq ($(PLATFORM),WEB)
 
 	SHELL := /bin/bash
 	CC := emcc
-	CXX := emcc
+	CXX := em++
 endif
 
 $(SRC)/%.opp: $(SRC)/%.cpp
