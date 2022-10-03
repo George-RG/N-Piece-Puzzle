@@ -8,7 +8,7 @@
 
 #include "ai_solver.h"
 
-bool DEBUG = false;
+bool DEBUG = true;
 
 void evaluate(State *state);
 State* CopyState(State* cur_state);
@@ -56,10 +56,13 @@ void* solve_new(void* arg)
 
     ListPtr move_list = ReturnSolution(final);
 
-    RB_Destroy(Visited);
-
     if(DEBUG)
+    {
         printf("Time taken: %f\n",datetime_diff_s);
+        printf("Size of visited: %d\n",RB_Size(Visited));
+    }
+
+    RB_Destroy(Visited);
 
     *(test->result) = move_list;
 
@@ -98,9 +101,13 @@ int solver_helper(State* cur_state,int Bound,RB Visited, State** final)
     {
         new_col = cur_state->blank_col + ColOffset[i];
         new_row = cur_state->blank_row + RowOffset[i];
-        
-        if(new_col >= 0 && new_col < size && new_row >= 0 && new_row < size /* && (cur_state->parent == NULL || (new_col != cur_state->parent->blank_col && new_row != cur_state->parent->blank_row)) */ )
+
+        if(new_col >= 0 && new_col < size && new_row >= 0 && new_row < size )
         {
+
+            if (cur_state->parent != NULL && (new_col == cur_state->parent->blank_col && new_row == cur_state->parent->blank_row))
+                continue;
+
             new_state = CopyState(cur_state);  
             new_state->board[cur_state->blank_row][cur_state->blank_col] = cur_state->board[new_row][new_col];
             new_state->board[new_row][new_col]=0;

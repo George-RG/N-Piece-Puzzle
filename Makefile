@@ -18,7 +18,7 @@ CC := gcc
 CXX := g++
 
 #Debug mode
-DEBUG := false
+DEBUG := true
 
 #Exta libs
 LIBS := -lraylib
@@ -48,7 +48,7 @@ OBJS_CXX := $(SRCS_CXX:$(SRC)/%.cpp=$(SRC)/%.opp)
 OBJPATH_CXX := $(addprefix $(BUILD)/,$(notdir $(OBJS_CXX)))
 
 ifeq ($(DEBUG),true)
-	CFLAGS += -g3
+	CFLAGS += -ggdb
 else
 	CFLAGS += -O3
 endif

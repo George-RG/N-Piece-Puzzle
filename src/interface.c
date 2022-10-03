@@ -190,19 +190,19 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				}
 			}
 
-			if (!IsSolveable(cur_state))
-			{
-				printf("Puzzle is not solvable\n");
-				started = false;
-				destroyfunc(cur_state);
-				int temp_size = (*gr_state_ptr)->board_size;
-				free_gra_state(gr_state);
-				*gr_state_ptr = create_dumy_state();
-				(*gr_state_ptr)->board_size = temp_size;
-				letter_count = 0;
-				puzzle_str[0] = '\0';
-				return;
-			}
+			// if (!IsSolveable(cur_state))
+			// {
+			// 	printf("Puzzle is not solvable\n");
+			// 	started = false;
+			// 	destroyfunc(cur_state);
+			// 	int temp_size = (*gr_state_ptr)->board_size;
+			// 	free_gra_state(gr_state);
+			// 	*gr_state_ptr = create_dumy_state();
+			// 	(*gr_state_ptr)->board_size = temp_size;
+			// 	letter_count = 0;
+			// 	puzzle_str[0] = '\0';
+			// 	return;
+			// }
 
 			if (isGoal(*cur_state) == 1)
 			{
