@@ -2,7 +2,7 @@
 WIN_PATH := /mnt/c/Users/Georg/Desktop/
 
 # Set the name of the output
-EXEC := game
+EXEC := index
 
 # paths
 LIB := libs
@@ -18,14 +18,15 @@ CC := gcc
 CXX := g++
 
 #Debug mode
-DEBUG := true
+DEBUG := false
 
 #Exta libs
 LIBS := -lraylib
 EXTRA :=
 
 #For web emcc path
-EMCC_PATH := /home/george/Downloads/emsdk/
+EMCC_PATH := /home/george/Documents/emsdk
+EMCC_TEMPLATE := $(LIB)/web/template.html
 
 
 ################################### DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING ###################################
@@ -35,7 +36,7 @@ EMCC_PATH := /home/george/Downloads/emsdk/
 PLATFORM = LINUX
 
 #compiler options
-CFLAGS = -Wall -Werror -I$(INCLUDE)
+CFLAGS = -I$(INCLUDE)
 CXXFLAGS = -I$(INCLUDE)
 LDFLAGS = -lm
 
@@ -47,10 +48,12 @@ SRCS_CXX := $(shell find $(SRC) -name '*.cpp')
 OBJS_CXX := $(SRCS_CXX:$(SRC)/%.cpp=$(SRC)/%.opp)
 OBJPATH_CXX := $(addprefix $(BUILD)/,$(notdir $(OBJS_CXX)))
 
-ifeq ($(DEBUG),true)
-	CFLAGS += -ggdb
-else
-	CFLAGS += -O3
+ifneq ($(PLATFORM),WEB)
+	ifeq ($(DEBUG),true)
+		CFLAGS += -ggdb -Wall -Werror 
+	else
+		CFLAGS += -O3 -Werror 
+	endif
 endif
 
 ifeq ($(PLATFORM),WIN)
@@ -64,13 +67,20 @@ else ifeq ($(PLATFORM),LINUX)
 
 	WIN_PATH = ./
 else ifeq ($(PLATFORM),WEB)
-	LDFLAGS += -L$(LIB)/web -lGL -lpthread -ldl -lrt -lX11 $(LIBS)
-
-	OBJS := EMCC $(OBJS)
-
-	SHELL := /bin/bash
 	CC := emcc
 	CXX := em++
+
+	CFLAGS += -DWASM
+	LDFLAGS += -L$(LIB)/web $(LIBS) -s ASYNCIFY -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --shell-file $(EMCC_TEMPLATE)
+
+# SHELL := /bin/bash
+
+	EXEC := $(EXEC).html
+
+	ifneq (,$(wildcard assets))
+		LDFLAGS += --preload-file=assets
+	endif
+	
 endif
 
 $(SRC)/%.opp: $(SRC)/%.cpp
@@ -78,10 +88,6 @@ $(SRC)/%.opp: $(SRC)/%.cpp
 
 $(SRC)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ && mv $@ $(BUILD) 
-
-# Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
-# $(LIB)/%.a:
-# 	$(MAKE) -C $(LIB) $*.a SUFFIX=$(PLATFORM)
 
 $(EXEC):$(OBJS) $(OBJS_CXX) $(EXTRA)
 	$(CXX) $(OBJPATH) $(OBJPATH_CXX) $(EXTRA) -o $(EXEC) $(LDFLAGS)
@@ -93,7 +99,7 @@ EMCC:
 
 #Cleaning
 PHONY clean:
-	rm -f $(BUILD)/*.o $(BUILD)/*.opp $(EXEC) $(EXTRA) $(EXEC).exe
+	rm -f $(BUILD)/*.o $(BUILD)/*.opp $(EXTRA) $(EXEC).exe $(EXEC) $(EXEC).html $(EXEC).js $(EXEC).wasm $(EXEC).data
 
 valgrind:
 	$(MAKE) clean
