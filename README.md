@@ -1,6 +1,6 @@
 # Graphical Representation of a Puzzle Solver
 
-## Try the game [Here](georgerg.com)
+## Try the game [Here](https://georgerg.com)
 
 ## The game
 
