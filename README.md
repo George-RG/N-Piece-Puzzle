@@ -1,5 +1,7 @@
 # Graphical Representation of a Puzzle Solver
 
+## Try the game [Here](https://georgerg.com)
+
 ## The game
 
 The program can solve the clasic [Sliding puzzle](https://en.wikipedia.org/wiki/Sliding_puzzle).
