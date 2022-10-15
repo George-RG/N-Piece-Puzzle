@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     
-    <title>Δομές Δεδομένων 2021-22 - Εργασία 1</title>
+    <title>N-Piece Puzzle By GeorgeRG</title>
     
     <meta name="title" content="N-Piece Puzzle By GeorgeRG">
     
@@ -165,7 +165,7 @@
 
         <span id='controls'>
           <span><input type="button" value="🖵 FULLSCREEN" onclick="Module.requestFullscreen(false, false)"></span>
-          <!-- <span><input type="button" id="btn-audio" value="🔇 SUSPEND" onclick="toggleAudio()"></span> -->
+          <span><input type="button" id="btn-audio" value="🔇 SUSPEND" onclick="toggleAudio()"></span>
         </span>
 
         <div class="emscripten">
@@ -305,16 +305,16 @@
             });
         })();
 
-        // function toggleAudio() {
-        //     var resumed = false;
-        //     audioContexList.forEach(ctx => {
-        //         if (ctx.state == "suspended") { ctx.resume(); resumed = true; }
-        //         else if (ctx.state == "running") ctx.suspend();
-        //     });
+        function toggleAudio() {
+            var resumed = false;
+            audioContexList.forEach(ctx => {
+                if (ctx.state == "suspended") { getAudioContext().resume();; resumed = true; }
+                else if (ctx.state == "running") ctx.suspend();
+            });
             
-        //     if (resumed) audioBtn.value = "🔇 SUSPEND";
-        //     else audioBtn.value = "🔈 RESUME";
-        // }
+            if (resumed) audioBtn.value = "🔇 SUSPEND";
+            else audioBtn.value = "🔈 RESUME";
+        }
         
         document.addEventListener("keyup", function onKeyUp(event) {
           for(context of audioContexList) {

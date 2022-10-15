@@ -71,7 +71,7 @@ else ifeq ($(PLATFORM),WEB)
 	CXX := em++
 
 	CFLAGS += -DWASM
-	LDFLAGS += -L$(LIB)/web $(LIBS) -s ASYNCIFY -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 --shell-file $(EMCC_TEMPLATE)
+	LDFLAGS += -L$(LIB)/web $(LIBS) -s ASYNCIFY -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=10 --shell-file $(EMCC_TEMPLATE)
 
 # SHELL := /bin/bash
 
@@ -99,7 +99,7 @@ EMCC:
 
 #Cleaning
 PHONY clean:
-	rm -f $(BUILD)/*.o $(BUILD)/*.opp $(EXTRA) $(EXEC).exe $(EXEC) $(EXEC).html $(EXEC).js $(EXEC).wasm $(EXEC).data
+	rm -f $(BUILD)/*.o $(BUILD)/*.opp $(EXTRA) $(EXEC).exe $(EXEC) $(EXEC).html $(EXEC).js $(EXEC).wasm $(EXEC).data *.js
 
 valgrind:
 	$(MAKE) clean
