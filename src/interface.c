@@ -32,7 +32,6 @@ char *remove_spaces(char *str);
 // Interface Globals
 bool first_time = true;
 bool first_end = true;
-Sound clap;
 Texture paste;
 Texture copy;
 bool started = false;
@@ -65,20 +64,22 @@ bool play = false;
 
 // Manual Globals
 State *manual_next_state = NULL;
+bool Completed_Manual= false;
 
 // SHUFFLE globals
 int rand_moves;
 State *rand_next_state = NULL;
 Move last = 10;
 
+// Audio GLobal
+bool SoundLoaded = false;
+Sound clap;
+
 void interface_init()
 {
 	// Αρχικοποίηση του παραθύρου
 	InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Puzzle");
 	SetTargetFPS(60);
-
-	InitAudioDevice();
-	clap = LoadSound("assets/clap.wav");
 
 	Image temp = LoadImage("assets/paste.png");
 	ImageResize(&temp, 40, 40);
@@ -89,6 +90,16 @@ void interface_init()
 	ImageResize(&temp, 40, 40);
 
 	copy = LoadTextureFromImage(temp);
+}
+
+void InitSound()
+{
+	if (!SoundLoaded)
+	{
+		InitAudioDevice();
+		clap = LoadSound("assets/clap.wav");
+		SoundLoaded = true;
+	}
 }
 
 void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
@@ -226,6 +237,8 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				(*gr_state_ptr)->board_size = -1;
 				return;
 			}
+
+			InitSound();
 
 			if (cur_mode == AUTO)
 			{
@@ -1092,6 +1105,12 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 	{
 		Rectangle back_button = (Rectangle){(SCREEN_WIDTH - PUZZLE_WIDTH) / 2 - (170 / 2), SCREEN_HEIGHT - 30 - 50, 170, 60};
 
+		if (isGoal(*cur_state) && !Completed_Manual)
+		{
+			Completed_Manual = true; 
+			PlaySound(clap);
+		}
+
 		// Updating
 		if (gr_state->trans.in_transition == false && !isGoal(*cur_state))
 		{
@@ -1126,7 +1145,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		// Update buttons
 		bool mouseOnBack = CheckCollisionPointRec(GetMousePosition(), back_button);
 
-		if ((CheckCollisionPointRec(GetMousePosition(), back_button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
+		if (mouseOnBack && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
 		{
 			int MAX_CHAR = gr_state->board_size * gr_state->board_size;
 
@@ -1181,6 +1200,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			cur_state = NULL;
 			*in_menu = true;
 			started = false;
+			Completed_Manual = false;
 			return;
 		}
 
