@@ -91,6 +91,16 @@ Color text_color = LIGHTGRAY;
 Color button_color = NOT_GRAY;
 Color buttonText_color = DARK_BAKCGROUND;
 
+void InitSound()
+{
+	if (!SoundLoaded)
+	{
+		InitAudioDevice();
+		clap = LoadSound("assets/clap.wav");
+		SoundLoaded = true;
+	}
+}
+
 void interface_init()
 {
 	// Αρχικοποίηση του παραθύρου
@@ -114,16 +124,8 @@ void interface_init()
 
 	dark_icon = LoadTextureFromImage(temp);
 	UnloadImage(temp);
-}
 
-void InitSound()
-{
-	if (!SoundLoaded)
-	{
-		InitAudioDevice();
-		clap = LoadSound("assets/clap.wav");
-		SoundLoaded = true;
-	}
+	//InitSound();
 }
 
 void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
@@ -261,8 +263,6 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				(*gr_state_ptr)->board_size = -1;
 				return;
 			}
-
-			InitSound();
 
 			if (cur_mode == AUTO)
 			{
@@ -1020,7 +1020,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			{
 				if (first_end)
 				{
-					PlaySound(clap);
+					//PlaySound(clap);
 					first_end = false;
 				}
 			}
@@ -1175,7 +1175,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		if (isGoal(*cur_state) && !Completed_Manual)
 		{
 			Completed_Manual = true; 
-			PlaySound(clap);
+			//PlaySound(clap);
 		}
 
 		// Updating
@@ -1568,7 +1568,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 void interface_close()
 {
 	// Unload all loaded data (textures, sounds, models...)
-	UnloadSound(clap);
+	//UnloadSound(clap);
 	UnloadTexture(paste);
 	UnloadTexture(copy);
 	UnloadTexture(dark_icon);
