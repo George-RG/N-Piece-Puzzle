@@ -15,8 +15,15 @@
 #define LLGRAY \
 	(Color) { 220, 220, 220, 255 } // Light Light Gray
 
+#define NOT_GRAY \
+	(Color) { 156, 156, 156, 255 } // Not Gray
+
 #define TRANSPARENT_BLACK \
 	(Color) { 0, 0, 0, 200 } // Transparent Black
+
+#define DARK_BAKCGROUND \
+	(Color) { 48, 48, 48, 255 } // Dark Background
+
 
 typedef enum play_mode
 {
@@ -34,9 +41,12 @@ bool first_time = true;
 bool first_end = true;
 Texture paste;
 Texture copy;
+Texture dark_icon;
 bool started = false;
 State *cur_state = NULL;
 float seconds = 0;
+bool dark_mode = true;
+
 
 // Text Box globals
 int framesCounter = 0;
@@ -75,6 +85,12 @@ Move last = 10;
 bool SoundLoaded = false;
 Sound clap;
 
+// Current Colors
+Color background_color = DARK_BAKCGROUND;
+Color text_color = LIGHTGRAY;
+Color button_color = NOT_GRAY;
+Color buttonText_color = DARK_BAKCGROUND;
+
 void interface_init()
 {
 	// Αρχικοποίηση του παραθύρου
@@ -85,11 +101,19 @@ void interface_init()
 	ImageResize(&temp, 40, 40);
 
 	paste = LoadTextureFromImage(temp);
+	UnloadImage(temp);
 
 	temp = LoadImage("assets/copy.png");
 	ImageResize(&temp, 40, 40);
 
 	copy = LoadTextureFromImage(temp);
+	UnloadImage(temp);
+
+	temp = LoadImage("assets/DarkMode.png");
+	ImageResize(&temp, 40, 40);
+
+	dark_icon = LoadTextureFromImage(temp);
+	UnloadImage(temp);
 }
 
 void InitSound()
@@ -351,6 +375,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		Rectangle autoBox = (Rectangle){SCREEN_WIDTH / 2 - (200 + 200 + 100) / 2, 450, 200, 140};
 		Rectangle manBox = (Rectangle){SCREEN_WIDTH / 2 + (200 + 200 + 100) / 2 - 200, 450, 200, 140};
 		Rectangle exitBox = (Rectangle){SCREEN_WIDTH - 30 - 170, SCREEN_HEIGHT - 30 - 50, 170, 60};
+		Rectangle DarkModeBox = (Rectangle){30, SCREEN_HEIGHT - 30 - textBox.height + 10	, textBox.height, textBox.height};
 		Rectangle shuffleBox = (Rectangle){GetScreenWidth() / 2 - MeasureText("Shuffle", 30) / 2 - 10, textBox.y + textBox.height + 40, MeasureText("Shuffle", 30) + 20, 40};
 
 		// Text box triggers
@@ -367,6 +392,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		bool clickedPaste = false;
 		bool mouseOnCopy = false;
 		bool clickedCopy = false;
+		bool mouseOnDarkMode = false;
 
 		//
 		if (solver_running == false)
@@ -530,6 +556,11 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			else
 				mouseOnExit = false;
 
+			if (CheckCollisionPointRec(GetMousePosition(), DarkModeBox))
+				mouseOnDarkMode = true;
+			else
+				mouseOnDarkMode = false;
+
 			mouseOnShuffle = CheckCollisionPointRec(GetMousePosition(), shuffleBox);
 
 			if ((CheckCollisionPointRec(GetMousePosition(), shuffleBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) && size_str[0] != '\0')
@@ -605,12 +636,33 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 				exit(0);
 			}
+
+			if ((CheckCollisionPointRec(GetMousePosition(), DarkModeBox) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
+			{
+				// Dark Mode
+				if (dark_mode)
+				{
+					background_color = RAYWHITE;
+	 				text_color = DARKGRAY;
+					button_color = LLGRAY;
+					buttonText_color = RAYWHITE;
+					dark_mode = false;
+				}
+				else
+				{
+					background_color = DARK_BAKCGROUND;
+	 				text_color = LIGHTGRAY;
+					button_color = NOT_GRAY;
+					buttonText_color = DARK_BAKCGROUND;
+					dark_mode = true;
+				}
+			}
 		}
 
 		// Draw the text box
 		BeginDrawing();
 
-		ClearBackground(RAYWHITE);
+		ClearBackground(background_color);
 
 		char *shown_str = puzzle_str;
 
@@ -628,9 +680,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		{
 			DrawRectangleRec(textBox, CYAN);
 			DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, BLACK);
-			DrawText(shown_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, RAYWHITE);
+			DrawText(shown_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, buttonText_color);
 
-			DrawRectangleRec(sizeBox, LLGRAY);
+			DrawRectangleRec(sizeBox, button_color);
 			DrawRectangleLines((int)sizeBox.x, (int)sizeBox.y, (int)sizeBox.width, (int)sizeBox.height, DARKGRAY);
 			DrawText(size_str, (int)sizeBox.x + 5, (int)sizeBox.y + 8, 40, CYAN);
 		}
@@ -638,19 +690,19 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		{
 			DrawRectangleRec(sizeBox, CYAN);
 			DrawRectangleLines((int)sizeBox.x, (int)sizeBox.y, (int)sizeBox.width, (int)sizeBox.height, BLACK);
-			DrawText(size_str, (int)sizeBox.x + 5, (int)sizeBox.y + 8, 40, RAYWHITE);
+			DrawText(size_str, (int)sizeBox.x + 5, (int)sizeBox.y + 8, 40, buttonText_color);
 
-			DrawRectangleRec(textBox, LLGRAY);
+			DrawRectangleRec(textBox, button_color);
 			DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
 			DrawText(shown_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, CYAN);
 		}
 		else
 		{
-			DrawRectangleRec(textBox, LLGRAY);
+			DrawRectangleRec(textBox, button_color);
 			DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
 			DrawText(shown_str, (int)textBox.x + 5, (int)textBox.y + 8, 35, CYAN);
 
-			DrawRectangleRec(sizeBox, LLGRAY);
+			DrawRectangleRec(sizeBox, button_color);
 			DrawRectangleLines((int)sizeBox.x, (int)sizeBox.y, (int)sizeBox.width, (int)sizeBox.height, DARKGRAY);
 			DrawText(size_str, (int)sizeBox.x + 5, (int)sizeBox.y + 8, 40, CYAN);
 		}
@@ -659,13 +711,13 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			MAX_CHAR = 0;
 
 		if (letter_count != MAX_CHAR)
-			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, textBox.y + textBox.height + 10, 20, DARKGRAY);
+			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, textBox.y + textBox.height + 10, 20, text_color);
 		else
 			DrawText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), SCREEN_WIDTH / 2 - MeasureText(TextFormat("INPUT CHARS: %i/%i", letter_count, MAX_CHAR), 20) / 2, textBox.y + textBox.height + 10, 20, MAROON);
 
 		DrawText(TextFormat("N-Piece Puzzle"), SCREEN_WIDTH / 2 - MeasureText("N-Piece Puzzle", 70) / 2, 25, 70, CYAN);
-		DrawText(TextFormat("Puzzle Size"), SCREEN_WIDTH / 2 - (MeasureText("Puzzle Size", 30) + 50 + 10) / 2, sizeBox.y + 15, 30, DARKGRAY);
-		DrawText(TextFormat("Current Puzzle"), SCREEN_WIDTH / 2 - MeasureText("Current Puzzle", 30) / 2, textBox.y - 30, 30, DARKGRAY);
+		DrawText(TextFormat("Puzzle Size"), SCREEN_WIDTH / 2 - (MeasureText("Puzzle Size", 30) + 50 + 10) / 2, sizeBox.y + 15, 30, text_color);
+		DrawText(TextFormat("Current Puzzle"), SCREEN_WIDTH / 2 - MeasureText("Current Puzzle", 30) / 2, textBox.y - 30, 30, text_color);
 		DrawText(TextFormat("Made by GeorgeRG"), SCREEN_WIDTH / 2 - MeasureText("Made by GeorgeRG", 25) / 2, SCREEN_HEIGHT - 35, 25, CYAN);
 
 		if (mouseOnText)
@@ -693,25 +745,25 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		if (cur_mode == AUTO)
 		{
 			DrawRectangleRec(autoBox, CYAN);
-			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width) / 2 - MeasureText("AUTO", 40) / 2, (int)autoBox.y + ((int)autoBox.height) / 2 - 20, 40, RAYWHITE);
+			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width) / 2 - MeasureText("AUTO", 40) / 2, (int)autoBox.y + ((int)autoBox.height) / 2 - 20, 40, buttonText_color);
 
-			DrawRectangleRec(manBox, LLGRAY);
+			DrawRectangleRec(manBox, button_color);
 			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width) / 2 - MeasureText("MANUAL", 40) / 2, (int)manBox.y + ((int)manBox.height) / 2 - 20, 40, CYAN);
 		}
 		else if (cur_mode == MANUAL)
 		{
-			DrawRectangleRec(autoBox, LLGRAY);
+			DrawRectangleRec(autoBox, button_color);
 			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width) / 2 - MeasureText("AUTO", 40) / 2, (int)autoBox.y + ((int)autoBox.height) / 2 - 20, 40, CYAN);
 
 			DrawRectangleRec(manBox, CYAN);
-			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width) / 2 - MeasureText("MANUAL", 40) / 2, (int)manBox.y + ((int)manBox.height) / 2 - 20, 40, RAYWHITE);
+			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width) / 2 - MeasureText("MANUAL", 40) / 2, (int)manBox.y + ((int)manBox.height) / 2 - 20, 40, buttonText_color);
 		}
 		else
 		{
-			DrawRectangleRec(autoBox, LLGRAY);
+			DrawRectangleRec(autoBox, button_color);
 			DrawText("AUTO", (int)autoBox.x + ((int)autoBox.width) / 2 - MeasureText("AUTO", 40) / 2, (int)autoBox.y + ((int)autoBox.height) / 2 - 20, 40, CYAN);
 
-			DrawRectangleRec(manBox, LLGRAY);
+			DrawRectangleRec(manBox, button_color);
 			DrawText("MANUAL", (int)manBox.x + ((int)manBox.width) / 2 - MeasureText("MANUAL", 40) / 2, (int)manBox.y + ((int)manBox.height) / 2 - 20, 40, CYAN);
 		}
 
@@ -740,9 +792,9 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			DrawRectangleRec(enterBox, CYAN);
 
 		DrawRectangleLines((int)enterBox.x, (int)enterBox.y, (int)enterBox.width, (int)enterBox.height, DARKGRAY);
-		DrawText("START", (int)enterBox.x + ((int)enterBox.width) / 2 - MeasureText("START", 40) / 2, (int)enterBox.y + ((int)enterBox.height) / 2 - 20, 40, RAYWHITE);
+		DrawText("START", (int)enterBox.x + ((int)enterBox.width) / 2 - MeasureText("START", 40) / 2, (int)enterBox.y + ((int)enterBox.height) / 2 - 20, 40, buttonText_color);
 
-		DrawText("Press ENTER to start", SCREEN_WIDTH / 2 - MeasureText("Press ENTER to start", 20) / 2, (int)enterBox.y + (int)enterBox.height + 10, 20, DARKGRAY);
+		DrawText("Press ENTER to start", SCREEN_WIDTH / 2 - MeasureText("Press ENTER to start", 20) / 2, (int)enterBox.y + (int)enterBox.height + 10, 20, text_color);
 
 		if (mouseOnExit)
 			DrawRectangleRec(exitBox, DARKGRAY);
@@ -750,7 +802,22 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			DrawRectangleRec(exitBox, GRAY);
 
 		DrawRectangleLines((int)exitBox.x, (int)exitBox.y, (int)exitBox.width, (int)exitBox.height, DARKGRAY);
-		DrawText("EXIT", (int)exitBox.x + ((int)exitBox.width) / 2 - MeasureText("EXIT", 40) / 2, (int)exitBox.y + ((int)exitBox.height) / 2 - 20, 40, RAYWHITE);
+		DrawText("EXIT", (int)exitBox.x + ((int)exitBox.width) / 2 - MeasureText("EXIT", 40) / 2, (int)exitBox.y + ((int)exitBox.height) / 2 - 20, 40, buttonText_color);
+
+		if (mouseOnDarkMode)
+			if(dark_mode == true)
+				DrawRectangleRec(DarkModeBox, LLGRAY);
+			else
+				DrawRectangleRec(DarkModeBox, NOT_GRAY);
+		else
+			if(dark_mode == true)
+				DrawRectangleRec(DarkModeBox, button_color);
+			else
+				DrawRectangleRec(DarkModeBox, button_color);
+
+		DrawRectangleLines((int)DarkModeBox.x, (int)DarkModeBox.y, (int)DarkModeBox.width, (int)DarkModeBox.height, DARKGRAY);
+		DrawTexture(dark_icon, DarkModeBox.x + DarkModeBox.width / 2 - dark_icon.width / 2, DarkModeBox.y + DarkModeBox.height / 2 - dark_icon.height / 2, CYAN);
+
 
 		if (mouseOnPaste)
 			DrawRectangleRec(pasteBox, LIGHTCYAN);
@@ -774,7 +841,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 			DrawRectangleRec(shuffleBox, CYAN);
 		
 		DrawRectangleLines((int)shuffleBox.x, (int)shuffleBox.y, (int)shuffleBox.width, (int)shuffleBox.height, DARKGRAY);
-		DrawText("Shuffle", (int)shuffleBox.x + ((int)shuffleBox.width) / 2 - MeasureText("Shuffle", 30) / 2, (int)shuffleBox.y + ((int)shuffleBox.height) / 2 - 15, 30, RAYWHITE);
+		DrawText("Shuffle", (int)shuffleBox.x + ((int)shuffleBox.width) / 2 - MeasureText("Shuffle", 30) / 2, (int)shuffleBox.y + ((int)shuffleBox.height) / 2 - 15, 30, buttonText_color);
 
 		if (solver_running)
 		{
@@ -1504,6 +1571,7 @@ void interface_close()
 	UnloadSound(clap);
 	UnloadTexture(paste);
 	UnloadTexture(copy);
+	UnloadTexture(dark_icon);
 
 	CloseAudioDevice();
 	CloseWindow();
