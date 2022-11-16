@@ -1003,7 +1003,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (cur_state->board[i][j] != 0)
 					{
-						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, button_color);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
 						DrawRectangleLinesEx(temp, 5, CYAN);
 
@@ -1045,7 +1045,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					for (int j = 0; j < gr_state->board_size; j++)
 						if (cur_state->board[i][j] != 0)
 						{
-							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, button_color);
 							Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
 							DrawRectangleLinesEx(temp, 5, CYAN);
 
@@ -1069,7 +1069,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 					for (int j = 0; j < gr_state->board_size; j++)
 						if (cur_state->board[i][j] != 0)
 						{
-							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+							DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, button_color);
 							Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
 							DrawRectangleLinesEx(temp, 5, CYAN);
 
@@ -1101,7 +1101,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 		// Draw the side panel
 		Rectangle side_panel = {0, 0, SCREEN_WIDTH - PUZZLE_WIDTH, SCREEN_HEIGHT};
-		DrawRectangleRec(side_panel, LLGRAY);
+		DrawRectangleRec(side_panel, button_color);
 		DrawRectangleLinesEx(side_panel, 15, CYAN);
 		DrawRectangleLinesEx(side_panel, 7, DARKGRAY);
 
@@ -1137,7 +1137,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 		else
 			buf = procced_text;
 
-		DrawText(buf, (int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText(buf, 40) / 2, (int)procced_button.y + ((int)procced_button.height) / 2 - 20, 40, RAYWHITE);
+		DrawText(buf, (int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText(buf, 40) / 2, (int)procced_button.y + ((int)procced_button.height) / 2 - 20, 40, buttonText_color);
 
 		if (!auto_play && !first_time)
 			DrawText("Press Enter to Procced", (int)procced_button.x + ((int)procced_button.width) / 2 - MeasureText("Press Enter to Procced", 20) / 2, (int)procced_button.y + ((int)procced_button.height) + 5, 20, DARKGRAY);
@@ -1164,7 +1164,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 		DrawText("TRIGGER: ", trigger_text_x, trigger_text_y, 35, CYAN);
 		DrawText(buf, trigger_text_x + MeasureText("TRIGGER: ", 35), trigger_text_y, 35, buf_color);
-		DrawText("Press \"A\" to toggle Auto Play", (GetScreenWidth() - PUZZLE_WIDTH) / 2 - MeasureText("Press \"A\" to toggle Auto Play", 20) / 2, trigger_text_y + 35 + 5, 20, GRAY);
+		DrawText("Press \"A\" to toggle Auto Play", (GetScreenWidth() - PUZZLE_WIDTH) / 2 - MeasureText("Press \"A\" to toggle Auto Play", 20) / 2, trigger_text_y + 35 + 5, 20, DARKGRAY);
 
 		EndDrawing();
 	}
@@ -1284,7 +1284,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (drawn_state->board[i][j] != 0)
 					{
-						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, button_color);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
 						DrawRectangleLinesEx(temp, 5, CYAN);
 
@@ -1308,7 +1308,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (drawn_state->board[i][j] != 0)
 					{
-						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, button_color);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
 						DrawRectangleLinesEx(temp, 5, CYAN);
 
@@ -1342,7 +1342,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 		// Draw the side panel
 		Rectangle side_panel = {0, 0, SCREEN_WIDTH - PUZZLE_WIDTH, SCREEN_HEIGHT};
-		DrawRectangleRec(side_panel, LLGRAY);
+		DrawRectangleRec(side_panel, button_color);
 		DrawRectangleLinesEx(side_panel, 15, CYAN);
 		DrawRectangleLinesEx(side_panel, 7, DARKGRAY);
 
@@ -1499,7 +1499,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (cur_state->board[i][j] != 0)
 					{
-						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, button_color);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
 						DrawRectangleLinesEx(temp, 5, CYAN);
 
@@ -1523,7 +1523,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 				for (int j = 0; j < gr_state->board_size; j++)
 					if (cur_state->board[i][j] != 0)
 					{
-						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, LLGRAY);
+						DrawRectangle(gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20, button_color);
 						Rectangle temp = {gr_state->positions[i][j].x + 10, gr_state->positions[i][j].y + 10, gr_state->edge - 20, gr_state->edge - 20};
 						DrawRectangleLinesEx(temp, 5, CYAN);
 
@@ -1557,7 +1557,7 @@ void interface_draw_frame(Graphics *gr_state_ptr, bool *in_menu)
 
 		// Draw the side panel
 		Rectangle side_panel = {0, 0, SCREEN_WIDTH - PUZZLE_WIDTH, SCREEN_HEIGHT};
-		DrawRectangleRec(side_panel, LLGRAY);
+		DrawRectangleRec(side_panel, button_color);
 		DrawRectangleLinesEx(side_panel, 15, CYAN);
 		DrawRectangleLinesEx(side_panel, 7, DARKGRAY);
 	
