@@ -1,6 +1,7 @@
 *.log
 *.o
 *.json
-*.a
+
+.vscode/
 
 vgcore.*

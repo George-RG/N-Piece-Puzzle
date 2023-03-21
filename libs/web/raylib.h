@@ -1566,20 +1566,4 @@ RLAPI void DetachAudioStreamProcessor(AudioStream stream, AudioCallback processo
 }
 #endif
 
-///// added for k08 //////////////////////////////////////////////
-#ifdef WASM
-    #include <emscripten/emscripten.h>
-#endif
-
-static inline void start_main_loop(void(*callback)()) {
-#ifdef WASM
-    emscripten_set_main_loop(callback, 0, 1);
-#else
-	while (!WindowShouldClose()) {
-        callback();
-    }
-#endif
-}
-///////////////////////////////////////////////////////////////////
-
 #endif // RAYLIB_H

@@ -1,76 +1,110 @@
+# Set the windows path you want to move the game inorder to run it (use /mnt/ befor the path so you can access you disk)
+WIN_PATH := /mnt/c/Users/Georg/Desktop/
+
+# Set the name of the output
+EXEC := index
+
 # paths
-LIB = ./lib
-INCLUDE = ./include
-INCLUDE2 = ./include/raylib
-MODULES = ./modules
-
-DEBUG = false
-
-MY_OS = linux
+LIB := libs
+INCLUDE := ./include  -I ./include/raylib
+SRC := ./src
+BUILD := ./build
 
 #Program args
-ARGS = 3
+ARGS := 3
 
-#compiler
-CC = gcc
+#Default compiler
+CC := gcc
+CXX := g++
+
+#Debug mode
+DEBUG := false
+
+#Exta libs
+LIBS := -lraylib
+EXTRA :=
+
+#For web emcc path
+EMCC_ARGS := -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=10
+EMCC_PATH := /home/george/Documents/emsdk
+EMCC_TEMPLATE := $(LIB)/web/template.html
+
+
+################################### DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING ###################################
+
+
+# Makefile options
+PLATFORM = LINUX
 
 #compiler options
-CFLAGS = -Wall -Werror -I$(INCLUDE) -I$(INCLUDE2) -std=c99
+CFLAGS = -I$(INCLUDE)
+CXXFLAGS = -I$(INCLUDE)
 LDFLAGS = -lm
 
-objects= game.o interface.o List.o RB.o PQ.o ai_solver.o $(LIB)/libraylib.a
+SRCS := $(shell find $(SRC) -name '*.c')
+OBJS := $(SRCS:$(SRC)/%.c=$(SRC)/%.o)
+OBJPATH := $(addprefix $(BUILD)/,$(notdir $(OBJS)))
 
-EXEC = game
+SRCS_CXX := $(shell find $(SRC) -name '*.cpp')
+OBJS_CXX := $(SRCS_CXX:$(SRC)/%.cpp=$(SRC)/%.opp)
+OBJPATH_CXX := $(addprefix $(BUILD)/,$(notdir $(OBJS_CXX)))
 
-ifeq ($(DEBUG),true)
-	CFLAGS += -g3 -O0
-else
-	CFLAGS += -O3
+ifneq ($(PLATFORM),WEB)
+	ifeq ($(DEBUG),true)
+		CFLAGS += -ggdb -Wall -Werror 
+	else
+		CFLAGS += -O3 -Werror 
+	endif
 endif
 
-ifeq ($(MY_OS),win)
-	LDFLAGS += -lgdi32 -lwinmm -lopengl32 -lpthread
+ifeq ($(PLATFORM),WIN)
+	LDFLAGS += -L$(LIB)/windows/ $(LIBS)  -lgdi32 -lwinmm -lopengl32 -lpthread
 	CC = x86_64-w64-mingw32-gcc
-else ifeq ($(MY_OS),linux)
-	LDFLAGS += -ldl -lpthread -lGL
+	CXX = x86_64-w64-mingw32-g++
+
+	EXEC :=$(EXEC).exe
+else ifeq ($(PLATFORM),LINUX)
+	LDFLAGS += -L$(LIB)/linux  $(LIBS) -lGL -lpthread -ldl -lrt -lX11
+
+	WIN_PATH = ./
+else ifeq ($(PLATFORM),WEB)
+	CC := emcc
+	CXX := em++
+
+	CFLAGS += -DWASM
+	LDFLAGS += -L$(LIB)/web $(LIBS) -s ASYNCIFY -s USE_GLFW=3 -s TOTAL_MEMORY=67108864 -s FORCE_FILESYSTEM=1 $(EMCC_ARGS) --shell-file $(EMCC_TEMPLATE)
+
+# SHELL := /bin/bash
+
+	EXEC := $(EXEC).html
+
+	ifneq (,$(wildcard assets))
+		LDFLAGS += --preload-file=assets
+	endif
+	
 endif
 
-$(EXEC):$(objects)
-	$(CC) $(objects) -o $(EXEC) $(LDFLAGS)
-#mv $(EXEC) /mnt/c/Users/Georg/Desktop/
-#rm -f $(EXEC)
+$(SRC)/%.opp: $(SRC)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@ && mv $@ $(BUILD)
 
-# Για να φτιάξουμε τα k08.a/libraylib.a τρέχουμε το make στο lib directory.
-$(LIB)/%.a:
-	$(MAKE) -C $(LIB) $*.a SUFFIX=$(MY_OS)
+$(SRC)/%.o: $(SRC)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@ && mv $@ $(BUILD) 
 
-#For compiling the ADTs
-List.o :
-	$(CC) -c $(MODULES)/List.c $(LDFLAGS) $(CFLAGS)
+$(EXEC):$(OBJS) $(OBJS_CXX) $(EXTRA)
+	$(CXX) $(OBJPATH) $(OBJPATH_CXX) $(EXTRA) -o $(EXEC) $(LDFLAGS)
+	-mv $(EXEC) $(WIN_PATH)
 
-RB.o :
-	$(CC) -c $(MODULES)/RB.c $(LDFLAGS) $(CFLAGS)
-
-PQ.o :
-	$(CC) -c $(MODULES)/PQ.c $(LDFLAGS) $(CFLAGS)
-
-game.o :
-	$(CC) -c game.c $(LDFLAGS) $(CFLAGS)
-
-ai_solver.o :
-	$(CC) -c ai_solver.c $(LDFLAGS) $(CFLAGS)
-
-interface.o :
-	$(CC) -c interface.c $(LDFLAGS) $(CFLAGS)
-
+EMCC:
+	$(EMCC_PATH)/emsdk activate latest
+	source $(EMCC_PATH)/emsdk_env.sh
 
 #Cleaning
 PHONY clean:
-	rm -f $(objects) $(EXEC)
-#cd /mnt/c/Users/Georg/Desktop/ 
-#rm -f $(EXEC)
+	rm -f $(BUILD)/*.o $(BUILD)/*.opp $(EXTRA) $(EXEC).exe $(EXEC) $(EXEC).html $(EXEC).js $(EXEC).wasm $(EXEC).data *.js
 
-valgrind: $(EXEC)
+valgrind:
+	$(MAKE) clean
+	$(MAKE) $(EXEC) DEBUG=true
 	valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all ./$(EXEC) $(ARGS)
 
 run: $(EXEC)
