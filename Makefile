@@ -92,7 +92,6 @@ $(SRC)/%.o: $(SRC)/%.c
 
 $(EXEC):$(OBJS) $(OBJS_CXX) $(EXTRA)
 	$(CXX) $(OBJPATH) $(OBJPATH_CXX) $(EXTRA) -o $(EXEC) $(LDFLAGS)
-	-mv $(EXEC) $(WIN_PATH)
 
 EMCC:
 	$(EMCC_PATH)/emsdk activate latest
